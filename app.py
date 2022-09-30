@@ -8,6 +8,7 @@ import MySQLdb.cursors
 import re
 from flask_mail import Mail, Message
 import hashlib
+from flask import jsonify
 # from init import mail
 
 app = Flask(__name__)
@@ -46,10 +47,16 @@ def login():
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute('SELECT * FROM accounts WHERE userName = % s AND password = % s', (username, password, ))
         account = cursor.fetchone()
-        print("sssssssssssssssssss",account)
+        
+        
         if account:
+            session['loggedin'] = True
             session["userName"]=account["userName"]
-            return account
+            return jsonify({'firstName':account['firstName'],
+            'lastName':account['lastName'],
+            'userName':account['userName'],
+            'email':account['email'],
+            'isOwner':account['isOwner']})
             # return render_template('index.html', msg = msg)
         else:
             return "FAIL"
