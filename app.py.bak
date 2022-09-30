@@ -7,6 +7,7 @@ from flask_mysqldb import MySQL
 import MySQLdb.cursors
 import re
 from flask_mail import Mail, Message
+import hashlib
 # from init import mail
 
 app = Flask(__name__)
@@ -32,18 +33,23 @@ mail= Mail(app)
 @app.route('/')
 @app.route('/login', methods =['GET', 'POST'])
 def login():
-    msg = ''
+    print(request.json)
     if request.method == 'POST' and 'userName' in request.json and 'password' in request.json:
         username = request.json['userName']
         pas = request.json['password']
-        password=str(hash(pas))
+        print(pas)
+        salt = "5gz"
+        db_password = pas+salt
+        pass1 = hashlib.md5(db_password.encode())
+        password=pass1.hexdigest()
+        print(password)
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute('SELECT * FROM accounts WHERE username = % s AND pass = % s', (username, password, ))
+        cursor.execute('SELECT * FROM accounts WHERE userName = % s AND password = % s', (username, password, ))
         account = cursor.fetchone()
+        print("sssssssssssssssssss",account)
         if account:
-            session["username"]=account["username"]
-            msg = 'Logged in successfully !'
-            return "OK"
+            session["userName"]=account["userName"]
+            return account
             # return render_template('index.html', msg = msg)
         else:
             return "FAIL"
@@ -53,7 +59,7 @@ def login():
 def logout():
     session.pop('loggedin', None)
     session.pop('id', None)
-    session.pop('username', None)
+    session.pop('userName', None)
     return "LOGGED_OUT"
  
 @app.route('/register', methods =['GET', 'POST'])
@@ -64,12 +70,15 @@ def register():
         last_name = request.json['lastName']
         username = request.json['userName']
         pas = request.json['password']
-        password=str(hash(pas))
+        salt = "5gz"
+        db_password = pas+salt
+        pass1 = hashlib.md5(db_password.encode())
+        password=pass1.hexdigest()
         email = request.json['email']
         owner=request.json['isOwner']
-        token=""
+        token="N"
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute('SELECT * FROM accounts WHERE username = % s', (username, ))
+        cursor.execute('SELECT * FROM accounts WHERE userName = % s', (username, ))
         account = cursor.fetchone()
         if account:
             msg = 'Account already exists !'
@@ -84,7 +93,34 @@ def register():
             mysql.connection.commit()
             msg = 'OK'
     elif request.method == 'POST':
-        msg = 'FAIL_R'
+        msg = 'FAIL'
+    return msg
+
+
+@app.route('/edit', methods =['GET', 'POST'])
+def edit():
+    msg = ''
+    if request.method == 'POST' and 'firstName' in request.json and 'lastName' in request.json and 'userName' in request.json and 'password' in request.json and 'email' in request.json  and 'isOwner' in request.json:
+        first_name = request.json['firstName']
+        last_name = request.json['lastName']
+        username = request.json['userName']
+        pas = request.json['password']
+        salt = "5gz"
+        db_password = pas+salt
+        pass1 = hashlib.md5(db_password.encode())
+        password=pass1.hexdigest()
+        email = request.json['email']
+        owner=request.json['isOwner']
+        token="N"
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('SELECT * FROM accounts WHERE userName = % s', (username, ))
+        account = cursor.fetchone()
+        if account:
+            cursor.execute('Update accounts SET firstName= %s, lastName= %s , password=%s, email=%s , owner=%s WHERE userName = % s',(first_name,last_name, password, email,owner))
+            mysql.connection.commit()
+            msg = 'OK'
+        else:
+            msg='FAIL'
     return msg
 
 @app.route('/reset_mail', methods =['GET', 'POST'])
@@ -97,7 +133,7 @@ def reset():
         account = cursor.fetchone()
         if account:
             msg=Message("Forget your password", sender="eventabloom@gmail.com",recipients=[email])
-            msg.body="heyyyyyyyyyy babyyyyyyyyyyyyyyyyyyyyyy"
+            msg.body=""
             mail.send(msg)
             cursor.execute('Update accounts SET token= %s WHERE email = % s', (token,email,))
             mysql.connection.commit()
@@ -114,7 +150,7 @@ def pass_reset(token):
         cursor.execute('SELECT * FROM accounts WHERE token = % s', (token, ))
         account = cursor.fetchone()
         if account:
-            cursor.execute('Update accounts SET token= %s, pass= %s WHERE token = % s', (token1,password,token,))
+            cursor.execute('Update accounts SET token= %s, password= %s WHERE token = % s', (token1,password,token,))
             mysql.connection.commit()
             return "OK"
         else:
