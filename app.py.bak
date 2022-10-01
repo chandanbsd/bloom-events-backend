@@ -18,7 +18,7 @@ app.secret_key = 'your secret key'
 app.config['MYSQL_HOST'] = '127.0.0.1'
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = 'Alok321#'
-app.config['MYSQL_DB'] = 'sys'
+app.config['MYSQL_DB'] = 'sedb'
 
 
 app.config['MAIL_SERVER']='smtp.gmail.com'
@@ -60,6 +60,7 @@ def login():
             # return render_template('index.html', msg = msg)
         else:
             return "FAIL"
+    return 
     
  
 @app.route('/logout',methods =['GET', 'POST'])
@@ -107,6 +108,7 @@ def register():
 @app.route('/edit', methods =['GET', 'POST'])
 def edit():
     msg = ''
+    print(request.json)
     if request.method == 'POST' and 'firstName' in request.json and 'lastName' in request.json and 'userName' in request.json and 'password' in request.json and 'email' in request.json  and 'isOwner' in request.json:
         first_name = request.json['firstName']
         last_name = request.json['lastName']
@@ -123,7 +125,7 @@ def edit():
         cursor.execute('SELECT * FROM accounts WHERE userName = % s', (username, ))
         account = cursor.fetchone()
         if account:
-            cursor.execute('Update accounts SET firstName= %s, lastName= %s , password=%s, email=%s , owner=%s WHERE userName = % s',(first_name,last_name, password, email,owner))
+            cursor.execute('Update accounts SET firstName= %s, lastName= %s , password=%s, email=%s , isOwner=%s WHERE userName = % s',(first_name,last_name, password, email,owner, username))
             mysql.connection.commit()
             msg = 'OK'
         else:
