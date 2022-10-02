@@ -52,7 +52,7 @@ def login():
         if account:
             session['loggedin'] = True
             session["userName"]=account["userName"]
-            return jsonify({'Status': 'OK',
+            return jsonify({'status': 'OK',
             'body':{
                 'firstName':account['firstName'],
             'lastName':account['lastName'],
@@ -61,7 +61,7 @@ def login():
             'isOwner':account['isOwner']}})
             # return render_template('index.html', msg = msg)
         else:
-            return ({'Status:':'FAIL'})
+            return ({'status:':'FAIL'})
     return 
     
  
@@ -70,7 +70,10 @@ def logout():
     session.pop('loggedin', None)
     session.pop('id', None)
     session.pop('userName', None)
-    return "LOGGED_OUT"
+    return {
+        'status':"OK"
+
+    }
  
 @app.route('/register', methods =['GET', 'POST'])
 def register():
@@ -101,9 +104,9 @@ def register():
         else:
             cursor.execute('INSERT INTO accounts VALUES (%s,%s, % s, % s, % s,%s,%s)', (first_name,last_name,username, password, email,owner,token))
             mysql.connection.commit()
-            return ({'Status:':'OK'})
+            return ({'status:':'OK'})
     elif request.method == 'POST':
-        return ({'Status:':'FAIL'}) 
+        return ({'status:':'FAIL'}) 
 
 @app.route('/speciallogin', methods =['GET', 'POST'])
 def speciallogin():
@@ -119,7 +122,7 @@ def speciallogin():
         cursor.execute('SELECT * FROM accounts WHERE email = % s', (email, ))
         account = cursor.fetchone()
         if account:
-            jsonify({'Status': 'OK',
+            jsonify({'status': 'OK',
             'body':{
                 'firstName':account['firstName'],
             'lastName':account['lastName'],
@@ -130,7 +133,7 @@ def speciallogin():
         else:
             cursor.execute('INSERT INTO accounts VALUES (%s,%s, % s, % s, % s,%s)', (first_name,last_name,username, email,owner,token))
             mysql.connection.commit()
-            return jsonify({'Status': 'OK',
+            return jsonify({'status': 'OK',
             'body':{
                 'firstName':account['firstName'],
             'lastName':account['lastName'],
@@ -138,7 +141,7 @@ def speciallogin():
             'email':account['email'],
             'isOwner':account['isOwner']}})
     elif request.method == 'POST':
-        return ({'Status:':'FAIL'})
+        return ({'status:':'FAIL'})
     
 
 
@@ -165,9 +168,9 @@ def edit():
         if account:
             cursor.execute('Update accounts SET firstName= %s, lastName= %s , password=%s, email=%s , isOwner=%s WHERE userName = % s',(first_name,last_name, password, email,owner, username))
             mysql.connection.commit()
-            return ({'Status:':'OK'})
+            return ({'status:':'OK'})
         else:
-            return ({'Status:':'OK'})
+            return ({'status:':'FAIL'})
     
 
 @app.route('/reset_mail', methods =['GET', 'POST'])
