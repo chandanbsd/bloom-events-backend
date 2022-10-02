@@ -17,7 +17,7 @@ CORS(app)
 app.secret_key = 'your secret key'
 app.config['MYSQL_HOST'] = '127.0.0.1'
 app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'Alok321#'
+app.config['MYSQL_PASSWORD'] = ''
 app.config['MYSQL_DB'] = 'sedb'
 
 
@@ -168,7 +168,15 @@ def edit():
         if account:
             cursor.execute('Update accounts SET firstName= %s, lastName= %s , password=%s, email=%s , isOwner=%s WHERE userName = % s',(first_name,last_name, password, email,owner, username))
             mysql.connection.commit()
-            return ({'status:':'OK'})
+            cursor.execute('SELECT * FROM accounts WHERE userName = % s', (username, ))
+            account = cursor.fetchone()
+            return jsonify({'status': 'OK',
+            'body':{
+                'firstName':account['firstName'],
+            'lastName':account['lastName'],
+            'userName':account['userName'],
+            'email':account['email'],
+            'isOwner':account['isOwner']}})
         else:
             return ({'status:':'FAIL'})
     
