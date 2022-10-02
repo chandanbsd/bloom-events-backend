@@ -61,7 +61,7 @@ def login():
             'isOwner':account['isOwner']}})
             # return render_template('index.html', msg = msg)
         else:
-            return ({'status:':'FAIL'})
+            return ({'status':'FAIL'})
     return 
     
  
@@ -104,25 +104,30 @@ def register():
         else:
             cursor.execute('INSERT INTO accounts VALUES (%s,%s, % s, % s, % s,%s,%s)', (first_name,last_name,username, password, email,owner,token))
             mysql.connection.commit()
-            return ({'status:':'OK'})
+            return ({'status':'OK'})
     elif request.method == 'POST':
-        return ({'status:':'FAIL'}) 
+        return ({'status':'FAIL'}) 
 
 @app.route('/speciallogin', methods =['GET', 'POST'])
 def speciallogin():
     msg = ''
+
     if request.method == 'POST' and 'firstName' in request.json and 'lastName' in request.json and 'userName' in request.json  and 'email' in request.json  and 'isOwner' in request.json:
+
         first_name = request.json['firstName']
         last_name = request.json['lastName']
         username = request.json['userName']
         email = request.json['email']
+
         owner=request.json['isOwner']
         token="N"
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)   
+    
         cursor.execute('SELECT * FROM accounts WHERE email = % s', (email, ))
         account = cursor.fetchone()
+        print(account, email)
         if account:
-            jsonify({'status': 'OK',
+            return jsonify({'status': 'OK',
             'body':{
                 'firstName':account['firstName'],
             'lastName':account['lastName'],
@@ -131,17 +136,32 @@ def speciallogin():
             'isOwner':account['isOwner']}})
             
         else:
-            cursor.execute('INSERT INTO accounts VALUES (%s,%s, % s, % s, % s,%s)', (first_name,last_name,username, email,owner,token))
+            print("Entered User Creation")
+            cursor.execute('SELECT userName FROM accounts')
+            accountList = cursor.fetchall()
+            takenList = []
+            for val in accountList:
+                takenList.append(val['userName'])
+            
+            if username in takenList:
+                return jsonify({'status':'FAIL'})
+
+            cursor.execute('INSERT INTO accounts VALUES (%s,%s, % s, % s, % s,%s, %s)', (first_name,last_name,username, "null",email,owner,token ))
             mysql.connection.commit()
-            return jsonify({'status': 'OK',
-            'body':{
-                'firstName':account['firstName'],
-            'lastName':account['lastName'],
-            'userName':account['userName'],
-            'email':account['email'],
-            'isOwner':account['isOwner']}})
-    elif request.method == 'POST':
-        return ({'status:':'FAIL'})
+            cursor.execute('SELECT * FROM accounts WHERE email = % s', (email, ))
+            account =  cursor.fetchone()
+
+            if account:
+                return jsonify({'status': 'OK',
+                'body':{
+                    'firstName':account['firstName'],
+                'lastName':account['lastName'],
+                'userName':account['userName'],
+                'email':account['email'],
+                'isOwner':account['isOwner']}})
+            else:
+                return jsonify({'status':'FAIL'})
+
     
 
 
@@ -178,7 +198,7 @@ def edit():
             'email':account['email'],
             'isOwner':account['isOwner']}})
         else:
-            return ({'status:':'FAIL'})
+            return ({'status':'FAIL'})
     
 
 @app.route('/reset_mail', methods =['GET', 'POST'])
