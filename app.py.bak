@@ -12,8 +12,8 @@ from flask import jsonify
 # from init import mail
 
 app = Flask(__name__)
-mail= Mail(app)
 CORS(app)
+mail= Mail(app)
 app.secret_key = 'your secret key'
 app.config['MYSQL_HOST'] = '127.0.0.1'
 app.config['MYSQL_USER'] = 'root'
@@ -210,19 +210,24 @@ def reset():
         cursor.execute('SELECT * FROM accounts WHERE email = % s', (email, ))
         account = cursor.fetchone()
         if account:
-            msg=Message("Forget your password", sender="eventabloom@gmail.com",recipients=[email])
-            msg.body=""
+            msg=Message("Password Reset Email", sender="eventabloom@gmail.com",recipients=[email])
+            msg.body=render_template("email.txt",token=token)
             mail.send(msg)
             cursor.execute('Update accounts SET token= %s WHERE email = % s', (token,email,))
             mysql.connection.commit()
-            return "OK"
+            return jsonify({"status":"OK"})
         else:
-            return "FAIL"
+            return jsonify({"status":"FAIL"})
 
-@app.route('/password_reset/<token>', methods =['GET', 'POST'])
-def pass_reset(token):
+@app.route('/password_reset', methods =['GET', 'POST'])
+def pass_reset():
     if request.method == 'POST' and 'password' in request.json:
-        password = request.json['password']
+        pas = request.json['password']
+        salt = "5gz"
+        db_password = pas+salt
+        pass1 = hashlib.md5(db_password.encode())
+        password=pass1.hexdigest()
+        token = request.json['token']
         token1=str(uuid.uuid4())
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute('SELECT * FROM accounts WHERE token = % s', (token, ))
@@ -230,7 +235,7 @@ def pass_reset(token):
         if account:
             cursor.execute('Update accounts SET token= %s, password= %s WHERE token = % s', (token1,password,token,))
             mysql.connection.commit()
-            return "OK"
+            return {"status": "OK"}
         else:
-            return "FAIL"
+            return {"status":"FAIL"}
     

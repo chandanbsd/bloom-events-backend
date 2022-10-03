@@ -1,0 +1,2 @@
+Hello, Please click on the following link to reset your password
+http://127.0.0.1:3000/login/password-reset/{{token}}
