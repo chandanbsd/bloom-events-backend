@@ -239,3 +239,107 @@ def pass_reset():
         else:
             return {"status":"FAIL"}
     
+# /EnterUserName's code for useractivitylist inserting into db and returning back from db.
+import os
+import sqlalchemy
+from sqlalchemy.types import JSON
+from sqlalchemy.ext.mutable import MutableDict
+from sqlalchemy import select
+from flask import Flask
+from flask import request
+from flask_sqlalchemy import SQLAlchemy
+from flask import jsonify
+
+app = Flask(__name__)
+
+temp=app.config['SQLALCHEMY_DATABASE_URI'] ='mysql://root:root@localhost:3306/bloomdb' 
+# os.path.join(basedir, 'database.db') 
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+
+db=SQLAlchemy(app)
+
+class Activities(db.Model):
+        availibility=db.Column(db.JSON)
+        hrcost=db.Column(db.Integer,nullable=False)
+        actid = db.Column(db.Integer,primary_key=True,nullable=False)
+        location=db.Column(db.String(50))
+        actname = db.Column(db.String(100),nullable=False)
+        actopen=db.Column(db.String(10),nullable=False)
+        actowner=db.Column(db.String(50),nullable=False)
+        actdesc=db.Column(db.String(50),nullable=False)
+        acttype=db.Column(db.Text(25))
+        actcity=db.Column(db.Text(25))
+        actstate=db.Column(db.Text(25))
+        actagerange = db.Column(db.Text(25))
+        actcost=db.Column(db.Text(25))
+        
+
+# @app.route("/")
+# def hello():
+#     return "Welcome to backend"
+
+@app.route("/activity",methods=['POST'])
+def factivity():
+    got=request.get_json()
+
+    print(got)
+    actobj=Activities(
+        availibility=got['availibility'],
+        hrcost=got['hrcost'],
+        actid=got['id'],
+        location=got['location'],
+        actname=got['name'],
+        actopen=got['isopen'],
+        actowner=got['owner'],
+        actdesc=got['description'],
+        acttype=got['category'],
+        actcity=['city'],
+        actstate=got['state'],
+        actagerange=got['agerange'],
+        actcost=got['cost']
+        )
+
+    db.session.add(actobj)
+
+    db.session.commit()
+
+    print(actobj)
+
+    # got=request.get_json()
+    # print(got)
+    # print(got['activityId'])
+    return ""
+
+@app.route("/ra",methods=['GET'])
+def returnacts():
+    
+    q=Activities.query.all()
+    
+    if len(q):
+        all_activities=[{"activityAvailibility":Activities.availibility,
+                        "activityHrCost":Activities.hrcost,
+                        "activityId":Activities.actid,
+                        "activityLocation":Activities.location,
+                        "activityName":Activities.actname,
+                        "activityOpen":Activities.actopen,
+                        "activityOwner":Activities.actowner,
+                        "activityDescription":Activities.location,
+                        "activityType":Activities.acttype,
+                        "activityCity":Activities.actcity,
+                        "activityState":Activities.actstate,
+                        "activityAgeRange":Activities.actagerange,
+                        "activityCost":Activities.actcost} for Activities in q]
+        
+        print(all_activities)
+        return jsonify({'status':'OK',
+                        'body':all_activities})
+
+    else:
+        return ({'status':'FAIL'})
+
+
+    
+    
+
+
