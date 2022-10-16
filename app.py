@@ -325,22 +325,6 @@ def venuelist():
         })
     
 # /EnterUserName's code for useractivitylist inserting into db and returning back from db.
-
-
-class Activities(db.Model):
-        availibility=db.Column(db.JSON)
-        hrcost=db.Column(db.Integer,nullable=False)
-        actid = db.Column(db.Integer,primary_key=True,nullable=False)
-        location=db.Column(db.String(50))
-        actname = db.Column(db.String(100),nullable=False)
-        actopen=db.Column(db.String(10),nullable=False)
-        actowner=db.Column(db.String(50),nullable=False)
-        actdesc=db.Column(db.String(50),nullable=False)
-        acttype=db.Column(db.Text(25))
-        actcity=db.Column(db.Text(25))
-        actstate=db.Column(db.Text(25))
-        actagerange = db.Column(db.Text(25))
-        actcost=db.Column(db.Text(25))
         
 
 # @app.route("/")
@@ -507,9 +491,6 @@ class Accounts(db.Model):
         state=db.Column(db.String(50),nullable=False)
         
 
-# @app.route("/")
-# def hello():
-#     return "Welcome to backend"
 
 
 
