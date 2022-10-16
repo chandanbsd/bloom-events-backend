@@ -78,7 +78,7 @@ def logout():
 @app.route('/register', methods =['GET', 'POST'])
 def register():
     msg = ''
-    if request.method == 'POST' and 'firstName' in request.json and 'lastName' in request.json and 'userName' in request.json and 'password' in request.json and 'email' in request.json  and 'isOwner' in request.json:
+    if request.method == 'POST' and 'firstName' in request.json and 'lastName' in request.json and 'userName' in request.json and 'password' in request.json and 'email' in request.json  and 'isOwner' in request.json and 'age' in request.json and 'gender' in request.json and 'isAvailable' in request.json and 'bio' in request.json and 'categoryType' in request.json and 'categoryLevel' in request.json and 'city' in request.json and 'state' in request.json:
         first_name = request.json['firstName']
         last_name = request.json['lastName']
         username = request.json['userName']
@@ -89,6 +89,14 @@ def register():
         password=pass1.hexdigest()
         email = request.json['email']
         owner=request.json['isOwner']
+        age=request.json['age']
+        gender=request.json['gender']
+        isAvailable=request.json['isAvailable']
+        bio=request.json['bio']
+        categoryType=request.json['categoryType']
+        categoryLevel=request.json['categoryLevel']
+        city=request.json['city']
+        state=request.json['state']
         token="N"
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute('SELECT * FROM accounts WHERE userName = % s', (username, ))
@@ -102,7 +110,8 @@ def register():
         elif not username or not password or not email:
             msg = 'Please fill out the form !'
         else:
-            cursor.execute('INSERT INTO accounts VALUES (%s,%s, % s, % s, % s,%s,%s)', (first_name,last_name,username, password, email,owner,token))
+            cursor.execute('INSERT INTO accounts VALUES (%s,%s, % s, % s, % s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)', (first_name,last_name,username, password, email,owner,token,age,gender , isAvailable,bio, categoryType, categoryLevel, city, state))
+
             mysql.connection.commit()
             return ({'status':'OK'})
     elif request.method == 'POST':
@@ -164,13 +173,11 @@ def speciallogin():
 
     
 
-
-
 @app.route('/edit', methods =['GET', 'POST'])
 def edit():
     msg = ''
     print(request.json)
-    if request.method == 'POST' and 'firstName' in request.json and 'lastName' in request.json and 'userName' in request.json and 'password' in request.json and 'email' in request.json  and 'isOwner' in request.json:
+    if request.method == 'POST' and 'firstName' in request.json and 'lastName' in request.json and 'userName' in request.json and 'password' in request.json and 'email' in request.json  and 'isOwner' in request.json and 'age' in request.json and 'gender' in request.json and 'isAvailable' in request.json and 'bio' in request.json and 'categoryType' in request.json and 'categoryLevel' in request.json and 'city' in request.json and 'state' in request.json:
         first_name = request.json['firstName']
         last_name = request.json['lastName']
         username = request.json['userName']
@@ -181,12 +188,20 @@ def edit():
         password=pass1.hexdigest()
         email = request.json['email']
         owner=request.json['isOwner']
+        age=request.json['age']
+        gender=request.json['gender']
+        isAvailable=request.json['isAvailable']
+        bio=request.json['bio']
+        categoryType=request.json['categoryType']
+        categoryLevel=request.json['categoryLevel']
+        city=request.json['city']
+        state=request.json['state']
         token="N"
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute('SELECT * FROM accounts WHERE userName = % s', (username, ))
         account = cursor.fetchone()
         if account:
-            cursor.execute('Update accounts SET firstName= %s, lastName= %s , password=%s, email=%s , isOwner=%s WHERE userName = % s',(first_name,last_name, password, email,owner, username))
+            cursor.execute('Update accounts SET firstName= %s, lastName= %s , password=%s, email=%s , isOwner=%s,age=%s,gender=%s,isAvailable=%s,bio=%s,categoryType=%s,categoryLevel=%s,city=%s,state=%s WHERE userName = % s',(first_name,last_name, password, email,owner, username,age,gender , isAvailable,bio, categoryType, categoryLevel, city, state))
             mysql.connection.commit()
             cursor.execute('SELECT * FROM accounts WHERE userName = % s', (username, ))
             account = cursor.fetchone()
@@ -238,6 +253,64 @@ def pass_reset():
             return {"status": "OK"}
         else:
             return {"status":"FAIL"}
+
+
+
+@app.route('/registervenue', methods =['GET', 'POST'])
+
+def registervenue():
+    
+    if request.method == 'POST' and 'venueOwner' in request.json and 'venueName' in request.json and 'venueLocation' in request.json and 'venueAvailability' in request.json  and 'venueOpen' in request.json and 'venueHrCost' in request.json and 'categoryType' in request.json:
+        with open('counter.txt','r') as f:
+            venueId=f.read()
+            print(venueId)
+        with open('counter.txt','w') as f:
+            f.write(str(int(venueId)+1))
+            
+        
+        venueOwner = request.json['venueOwner']
+        venueName = request.json['venueName']
+        venueLocation= request.json['venueLocation']
+        venueAvailability=request.json['venueAvailability']
+        venueOpen=request.json['venueOpen']
+        venueHrCost=request.json['venueHrCost']
+        categoryType=request.json['categoryType']
+        venueCity=request.json['venueCity']
+        venueState=request.json['venueState']
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('INSERT INTO Venue VALUES (%s,%s, % s, %s, % s,%s,%s, %s,%s,%s)', (venueId,venueOwner,venueName, venueLocation, venueAvailability,venueOpen,venueHrCost,categoryType,venueCity,venueState))
+        mysql.connection.commit()
+        cursor.execute('SELECT * FROM  Venue')
+        data= cursor.fetchall() 
+        arr=[]
+
+        return jsonify({
+        'body':list(data),
+        'status':'OK'
+        })
+    elif request.method == 'POST':
+        return jsonify({'status':'FAIL'})
+
+
+@app.route('/venuelist', methods =['GET', 'POST'])
+
+def venuelist():
+
+    if request.method == 'GET':
+        print(request.method)
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('SELECT * FROM  Venue')
+        data= cursor.fetchall() 
+    
+        return jsonify({
+        'body':list(data),
+        'status':'OK'
+        })
+    
+    return jsonify({
+        'body': {},
+        'status':'FAIL'
+        })
     
 # /EnterUserName's code for useractivitylist inserting into db and returning back from db.
 import os
