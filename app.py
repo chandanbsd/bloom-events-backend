@@ -78,7 +78,7 @@ def logout():
 @app.route('/register', methods =['GET', 'POST'])
 def register():
     msg = ''
-    if request.method == 'POST' and 'firstName' in request.json and 'lastName' in request.json and 'userName' in request.json and 'password' in request.json and 'email' in request.json  and 'isOwner' in request.json:
+    if request.method == 'POST' and 'firstName' in request.json and 'lastName' in request.json and 'userName' in request.json and 'password' in request.json and 'email' in request.json  and 'isOwner' in request.json and 'age' in request.json and 'gender' in request.json and 'isAvailable' in request.json and 'bio' in request.json and 'categoryType' in request.json and 'categoryLevel' in request.json and 'city' in request.json and 'state' in request.json:
         first_name = request.json['firstName']
         last_name = request.json['lastName']
         username = request.json['userName']
@@ -89,6 +89,14 @@ def register():
         password=pass1.hexdigest()
         email = request.json['email']
         owner=request.json['isOwner']
+        age=request.json['age']
+        gender=request.json['gender']
+        isAvailable=request.json['isAvailable']
+        bio=request.json['bio']
+        categoryType=request.json['categoryType']
+        categoryLevel=request.json['categoryLevel']
+        city=request.json['city']
+        state=request.json['state']
         token="N"
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute('SELECT * FROM accounts WHERE userName = % s', (username, ))
@@ -102,7 +110,8 @@ def register():
         elif not username or not password or not email:
             msg = 'Please fill out the form !'
         else:
-            cursor.execute('INSERT INTO accounts VALUES (%s,%s, % s, % s, % s,%s,%s)', (first_name,last_name,username, password, email,owner,token))
+            cursor.execute('INSERT INTO accounts VALUES (%s,%s, % s, % s, % s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)', (first_name,last_name,username, password, email,owner,token,age,gender , isAvailable,bio, categoryType, categoryLevel, city, state))
+
             mysql.connection.commit()
             return ({'status':'OK'})
     elif request.method == 'POST':
@@ -170,7 +179,7 @@ def speciallogin():
 def edit():
     msg = ''
     print(request.json)
-    if request.method == 'POST' and 'firstName' in request.json and 'lastName' in request.json and 'userName' in request.json and 'password' in request.json and 'email' in request.json  and 'isOwner' in request.json:
+    if request.method == 'POST' and 'firstName' in request.json and 'lastName' in request.json and 'userName' in request.json and 'password' in request.json and 'email' in request.json  and 'isOwner' in request.json and 'age' in request.json and 'gender' in request.json and 'isAvailable' in request.json and 'bio' in request.json and 'categoryType' in request.json and 'categoryLevel' in request.json and 'city' in request.json and 'state' in request.json:
         first_name = request.json['firstName']
         last_name = request.json['lastName']
         username = request.json['userName']
@@ -181,12 +190,20 @@ def edit():
         password=pass1.hexdigest()
         email = request.json['email']
         owner=request.json['isOwner']
+        age=request.json['age']
+        gender=request.json['gender']
+        isAvailable=request.json['isAvailable']
+        bio=request.json['bio']
+        categoryType=request.json['categoryType']
+        categoryLevel=request.json['categoryLevel']
+        city=request.json['city']
+        state=request.json['state']
         token="N"
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute('SELECT * FROM accounts WHERE userName = % s', (username, ))
         account = cursor.fetchone()
         if account:
-            cursor.execute('Update accounts SET firstName= %s, lastName= %s , password=%s, email=%s , isOwner=%s WHERE userName = % s',(first_name,last_name, password, email,owner, username))
+            cursor.execute('Update accounts SET firstName= %s, lastName= %s , password=%s, email=%s , isOwner=%s,age=%s,gender=%s,isAvailable=%s,bio=%s,categoryType=%s,categoryLevel=%s,city=%s,state=%s WHERE userName = % s',(first_name,last_name, password, email,owner, username,age,gender , isAvailable,bio, categoryType, categoryLevel, city, state))
             mysql.connection.commit()
             cursor.execute('SELECT * FROM accounts WHERE userName = % s', (username, ))
             account = cursor.fetchone()
@@ -238,165 +255,59 @@ def pass_reset():
             return {"status": "OK"}
         else:
             return {"status":"FAIL"}
+
+@app.route('/registervenue', methods =['GET', 'POST'])
+
+def registervenue():
     
-# /EnterUserName's code for useractivitylist inserting into db and returning back from db.
-import os
-import sqlalchemy
-from sqlalchemy.types import JSON
-from sqlalchemy.ext.mutable import MutableDict
-from sqlalchemy import select
-from flask import Flask
-from flask import request
-from flask_sqlalchemy import SQLAlchemy
-from flask import jsonify
-
-app = Flask(__name__)
-
-temp=app.config['SQLALCHEMY_DATABASE_URI'] ='mysql://root:root@localhost:3306/bloomdb' 
-# os.path.join(basedir, 'database.db') 
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-
-db=SQLAlchemy(app)
-
-class Activities(db.Model):
-        availibility=db.Column(db.JSON)
-        hrcost=db.Column(db.Integer,nullable=False)
-        actid = db.Column(db.Integer,primary_key=True,nullable=False)
-        location=db.Column(db.String(50))
-        actname = db.Column(db.String(100),nullable=False)
-        actopen=db.Column(db.String(10),nullable=False)
-        actowner=db.Column(db.String(50),nullable=False)
-        actdesc=db.Column(db.String(50),nullable=False)
-        acttype=db.Column(db.Text(25))
-        actcity=db.Column(db.Text(25))
-        actstate=db.Column(db.Text(25))
-        actagerange = db.Column(db.Text(25))
-        actcost=db.Column(db.Text(25))
+    if request.method == 'POST' and 'venueOwner' in request.json and 'venueName' in request.json and 'venueLocation' in request.json and 'venueAvailability' in request.json  and 'venueOpen' in request.json and 'venueHrCost' in request.json and 'categoryType' in request.json:
+        with open('counter.txt','r') as f:
+            venueId=f.read()
+            print(venueId)
+        with open('counter.txt','w') as f:
+            f.write(str(int(venueId)+1))
+            
         
+        venueOwner = request.json['venueOwner']
+        venueName = request.json['venueName']
+        venueLocation= request.json['venueLocation']
+        venueAvailability=request.json['venueAvailability']
+        venueOpen=request.json['venueOpen']
+        venueHrCost=request.json['venueHrCost']
+        categoryType=request.json['categoryType']
+        venueCity=request.json['venueCity']
+        venueState=request.json['venueState']
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('INSERT INTO Venue VALUES (%s,%s, % s, %s, % s,%s,%s, %s,%s,%s)', (venueId,venueOwner,venueName, venueLocation, venueAvailability,venueOpen,venueHrCost,categoryType,venueCity,venueState))
+        mysql.connection.commit()
+        cursor.execute('SELECT * FROM  Venue')
+        data= cursor.fetchall() 
+        arr=[]
 
-# @app.route("/")
-# def hello():
-#     return "Welcome to backend"
+        return jsonify({
+        'body':list(data),
+        'status':'OK'
+        })
+    elif request.method == 'POST':
+        return jsonify({'status':'FAIL'})
 
-@app.route("/activity",methods=['POST'])
-def factivity():
-    got=request.get_json()
 
-    print(got)
-    actobj=Activities(
-        availibility=got['availibility'],
-        hrcost=got['hrcost'],
-        actid=got['id'],
-        location=got['location'],
-        actname=got['name'],
-        actopen=got['isopen'],
-        actowner=got['owner'],
-        actdesc=got['description'],
-        acttype=got['category'],
-        actcity=['city'],
-        actstate=got['state'],
-        actagerange=got['agerange'],
-        actcost=got['cost']
-        )
+@app.route('/venuelist', methods =['GET', 'POST'])
 
-    db.session.add(actobj)
+def venuelist():
 
-    db.session.commit()
-
-    print(actobj)
-
-    # got=request.get_json()
-    # print(got)
-    # print(got['activityId'])
-    return ""
-
-@app.route("/ra",methods=['GET'])
-def returnacts():
+    if request.method == 'GET':
+        print(request.method)
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('SELECT * FROM  Venue')
+        data= cursor.fetchall() 
     
-    q=Activities.query.all()
+        return jsonify({
+        'body':list(data),
+        'status':'OK'
+        })
     
-    if len(q):
-        all_activities=[{"activityAvailibility":Activities.availibility,
-                        "activityHrCost":Activities.hrcost,
-                        "activityId":Activities.actid,
-                        "activityLocation":Activities.location,
-                        "activityName":Activities.actname,
-                        "activityOpen":Activities.actopen,
-                        "activityOwner":Activities.actowner,
-                        "activityDescription":Activities.location,
-                        "activityType":Activities.acttype,
-                        "activityCity":Activities.actcity,
-                        "activityState":Activities.actstate,
-                        "activityAgeRange":Activities.actagerange,
-                        "activityCost":Activities.actcost} for Activities in q]
-        
-        print(all_activities)
-        return jsonify({'status':'OK',
-                        'body':all_activities})
-
-    else:
-        return ({'status':'FAIL'})
-
-#api for user's list:
-# @app.route("/users",methods=['POST'])
-# def fusers():
-#     got=request.get_json()#get users from request
-#     print(got)#print users
-#     usersobj=Accounts(
-#         firstName=got['firstName'],
-#         lastName=got['lastName'],
-#         userName=got['userName'],
-#         password=got['password'],
-#         email=got['email'],
-#         isOwner=got['isOwner'],
-#         token=got['token'],
-#         age=got['age'],
-#         gender=got['gender'],
-#         isAvailable=got['isAvailable'],
-#         bio=got['bio'],
-#         categoryType=got['categoryType'],
-#         categoryLevel=got['categoryLevel'],
-#         city=got['city'],
-#         state=got['state']
-#         )
-
-#     db.session.add(usersobj)
-
-#     db.session.commit()
-
-#     print(usersobj)
-
-#     # got=request.get_json()
-#     # print(got)
-#     # print(got['activityId'])
-#     return ""
-
-#api for getting from user's list
-@app.route("/ru",methods=['GET'])
-def returnusers():
-    
-    q=Accounts.query.all()
-    
-    if len(q):
-        all_users=[{"userName":Accounts.userName,
-                        "activityHrCost":Accounts.firstName,
-                        "activityId":Accounts.lastName,
-                        "age":Accounts.age,
-                        "gender":Accounts.gender,
-                        "isAvailable":Accounts.isAvailable,
-                        "bio":Accounts.bio,
-                        "categoryType":Accounts.categoryType,
-                        "categoryLevel":Accounts.categoryLevel,
-                        "city":Accounts.city,
-                        "state":Accounts.state,
-                       } for Accounts in q]
-        
-        return jsonify({'status':'OK',
-                        'body':all_users})
-
-    else:
-        return ({'status':'FAIL'})
-    
-
-
+    return jsonify({
+        'body': {},
+        'status':'FAIL'
+        })
