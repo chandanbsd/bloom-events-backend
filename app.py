@@ -272,7 +272,7 @@ def pass_reset():
 
 def registervenue():
     
-    if request.method == 'POST' and 'venueOwner' in request.json and 'venueName' in request.json and 'venueLocation' in request.json and 'venueAvailability' in request.json  and 'venueOpen' in request.json and 'venueHrCost' in request.json and 'categoryType' in request.json:
+    if request.method == 'POST' and 'venueOwner' in request.json and 'venueName' in request.json and 'venueAddress' in request.json and 'venueAvailability' in request.json  and 'venueOpen' in request.json and 'venueHrCost' in request.json and 'venueCategory' in request.json:
         with open('counter.txt','r') as f:
             venueId=f.read()
             print(venueId)
@@ -282,15 +282,15 @@ def registervenue():
         
         venueOwner = request.json['venueOwner']
         venueName = request.json['venueName']
-        venueLocation= request.json['venueLocation']
+        venueAddress= request.json['venueAddress']
         venueAvailability=request.json['venueAvailability']
         venueOpen=request.json['venueOpen']
         venueHrCost=request.json['venueHrCost']
-        categoryType=request.json['categoryType']
+        venueCategory=request.json['venueCategory']
         venueCity=request.json['venueCity']
         venueState=request.json['venueState']
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute('INSERT INTO Venue VALUES (%s,%s, % s, %s, % s,%s,%s, %s,%s,%s)', (venueId,venueOwner,venueName, venueLocation, venueAvailability,venueOpen,venueHrCost,categoryType,venueCity,venueState))
+        cursor.execute('INSERT INTO Venue VALUES (%s,%s, % s, %s, % s,%s,%s, %s,%s,%s)', (venueId,venueOwner,venueName, venueAddress, venueAvailability,venueOpen,venueHrCost,venueCategory,venueCity,venueState))
         mysql.connection.commit()
         cursor.execute('SELECT * FROM  Venue')
         data= cursor.fetchall() 
