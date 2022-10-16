@@ -9,7 +9,12 @@ import re
 from flask_mail import Mail, Message
 import hashlib
 from flask import jsonify
-# from init import mail
+import os
+import sqlalchemy
+from sqlalchemy.types import JSON
+from sqlalchemy.ext.mutable import MutableDict
+from sqlalchemy import select
+from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 CORS(app)
@@ -17,9 +22,10 @@ mail= Mail(app)
 app.secret_key = 'your secret key'
 app.config['MYSQL_HOST'] = '127.0.0.1'
 app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = ''
-app.config['MYSQL_DB'] = 'sedb'
-
+app.config['MYSQL_PASSWORD'] = 'root'
+app.config['MYSQL_DB'] = 'bloomdb'
+temp=app.config['SQLALCHEMY_DATABASE_URI'] ='mysql://root:root@localhost:3306/bloomdb' 
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 app.config['MAIL_SERVER']='smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
@@ -28,7 +34,6 @@ app.config['MAIL_PASSWORD'] = 'orkdfnzxgkvvigpz'
 app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = True
 
- 
 mysql = MySQL(app)
 mail= Mail(app)
 @app.route('/')
@@ -313,21 +318,8 @@ def venuelist():
         })
     
 # /EnterUserName's code for useractivitylist inserting into db and returning back from db.
-import os
-import sqlalchemy
-from sqlalchemy.types import JSON
-from sqlalchemy.ext.mutable import MutableDict
-from sqlalchemy import select
-from flask import Flask
-from flask import request
-from flask_sqlalchemy import SQLAlchemy
-from flask import jsonify
 
-app = Flask(__name__)
 
-temp=app.config['SQLALCHEMY_DATABASE_URI'] ='mysql://root:root@localhost:3306/bloomdb' 
-# os.path.join(basedir, 'database.db') 
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 
 db=SQLAlchemy(app)
@@ -363,7 +355,6 @@ def factivity():
         actid=got['id'],
         location=got['location'],
         actname=got['name'],
-        actopen=got['isopen'],
         actowner=got['owner'],
         actdesc=got['description'],
         acttype=got['category'],
@@ -390,12 +381,11 @@ def returnacts():
     q=Activities.query.all()
     
     if len(q):
-        all_activities=[{"activityAvailibility":Activities.availibility,
+        all_activities=[{"activityAvailability":Activities.availibility,
                         "activityHrCost":Activities.hrcost,
                         "activityId":Activities.actid,
                         "activityLocation":Activities.location,
                         "activityName":Activities.actname,
-                        "activityOpen":Activities.actopen,
                         "activityOwner":Activities.actowner,
                         "activityDescription":Activities.location,
                         "activityType":Activities.acttype,
@@ -446,6 +436,7 @@ def returnacts():
 #     return ""
 
 #api for getting from user's list
+
 @app.route("/ru",methods=['GET'])
 def returnusers():
     
