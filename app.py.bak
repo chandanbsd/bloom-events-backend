@@ -36,6 +36,13 @@ app.config['MAIL_USE_SSL'] = True
 
 mysql = MySQL(app)
 mail= Mail(app)
+
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+
+db=SQLAlchemy(app)
+
+
 @app.route('/')
 @app.route('/login', methods =['GET', 'POST'])
 def login():
@@ -320,10 +327,6 @@ def venuelist():
 # /EnterUserName's code for useractivitylist inserting into db and returning back from db.
 
 
-
-
-db=SQLAlchemy(app)
-
 class Activities(db.Model):
         availibility=db.Column(db.JSON)
         hrcost=db.Column(db.Integer,nullable=False)
@@ -338,185 +341,6 @@ class Activities(db.Model):
         actstate=db.Column(db.Text(25))
         actagerange = db.Column(db.Text(25))
         actcost=db.Column(db.Text(25))
-        
-
-# @app.route("/")
-# def hello():
-#     return "Welcome to backend"
-
-@app.route("/activity",methods=['POST'])
-def factivity():
-    got=request.get_json()
-
-    print(got)
-    actobj=Activities(
-        availibility=got['availibility'],
-        hrcost=got['hrcost'],
-        actid=got['id'],
-        location=got['location'],
-        actname=got['name'],
-        actowner=got['owner'],
-        actdesc=got['description'],
-        acttype=got['category'],
-        actcity=['city'],
-        actstate=got['state'],
-        actagerange=got['agerange'],
-        actcost=got['cost']
-        )
-
-    db.session.add(actobj)
-
-    db.session.commit()
-
-    print(actobj)
-
-    # got=request.get_json()
-    # print(got)
-    # print(got['activityId'])
-    return ""
-
-@app.route("/ra",methods=['GET'])
-def returnacts():
-    
-    q=Activities.query.all()
-    
-    if len(q):
-        all_activities=[{"activityAvailability":Activities.availibility,
-                        "activityHrCost":Activities.hrcost,
-                        "activityId":Activities.actid,
-                        "activityLocation":Activities.location,
-                        "activityName":Activities.actname,
-                        "activityOwner":Activities.actowner,
-                        "activityDescription":Activities.location,
-                        "activityType":Activities.acttype,
-                        "activityCity":Activities.actcity,
-                        "activityState":Activities.actstate,
-                        "activityAgeRange":Activities.actagerange,
-                        "activityCost":Activities.actcost} for Activities in q]
-        
-        print(all_activities)
-        return jsonify({'status':'OK',
-                        'body':all_activities})
-
-    else:
-        return ({'status':'FAIL'})
-
-#api for user's list:
-# @app.route("/users",methods=['POST'])
-# def fusers():
-#     got=request.get_json()#get users from request
-#     print(got)#print users
-#     usersobj=Accounts(
-#         firstName=got['firstName'],
-#         lastName=got['lastName'],
-#         userName=got['userName'],
-#         password=got['password'],
-#         email=got['email'],
-#         isOwner=got['isOwner'],
-#         token=got['token'],
-#         age=got['age'],
-#         gender=got['gender'],
-#         isAvailable=got['isAvailable'],
-#         bio=got['bio'],
-#         categoryType=got['categoryType'],
-#         categoryLevel=got['categoryLevel'],
-#         city=got['city'],
-#         state=got['state']
-#         )
-
-#     db.session.add(usersobj)
-
-#     db.session.commit()
-
-#     print(usersobj)
-
-#     # got=request.get_json()
-#     # print(got)
-#     # print(got['activityId'])
-#     return ""
-
-#api for getting from user's list
-
-@app.route("/ru",methods=['GET'])
-def returnusers():
-    
-    q=Accounts.query.all()
-    
-    if len(q):
-        all_users=[{"userName":Accounts.userName,
-                        "activityHrCost":Accounts.firstName,
-                        "activityId":Accounts.lastName,
-                        "age":Accounts.age,
-                        "gender":Accounts.gender,
-                        "isAvailable":Accounts.isAvailable,
-                        "bio":Accounts.bio,
-                        "categoryType":Accounts.categoryType,
-                        "categoryLevel":Accounts.categoryLevel,
-                        "city":Accounts.city,
-                        "state":Accounts.state,
-                       } for Accounts in q]
-        
-        return jsonify({'status':'OK',
-                        'body':all_users})
-
-    else:
-        return ({'status':'FAIL'})
-    
-
-
-# save this as app.py
-import os
-import sqlalchemy
-from sqlalchemy.types import JSON
-from sqlalchemy.ext.mutable import MutableDict
-from sqlalchemy import select
-from flask import Flask
-from flask import request
-from flask_sqlalchemy import SQLAlchemy
-from flask import jsonify
-
-app = Flask(__name__)
-
-temp=app.config['SQLALCHEMY_DATABASE_URI'] ='mysql://root:root@localhost:3306/bloomdb' 
-# os.path.join(basedir, 'database.db') 
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-
-db=SQLAlchemy(app)
-
-class Activities(db.Model):
-        activityName=db.Column(db.Integer,nullable=False)
-        activityDescription=db.Column(db.Integer,nullable=False)
-        activityOrganizer = db.Column(db.Integer,nullable=False)
-        activityVenueId=db.Column(db.Integer,primary_key=True,nullable=False)
-        activityVenueName= db.Column(db.String(100),nullable=False)
-        activityVenueAddress=db.Column(db.String(10),nullable=False)
-        activityLocation=db.Column(db.String(50),nullable=False)
-        activityDate=db.Column(db.JSON)
-        activityTime=db.Column(db.JSON)
-        activityCity=db.Column(db.Text(25))
-        activityState=db.Column(db.Text(25))
-        activityCategory = db.Column(db.Text(25))
-        activityAgeRange=db.Column(db.Text(25))
-        activityCost=db.Column("activityCost", db.Text(25))
-
-
-class Accounts(db.Model):
-        firstName=db.Column(db.String(50),nullable=False)
-        lastName=db.Column(db.String(50),nullable=False)
-        userName= db.Column(db.String(50),primary_key=True,nullable=False)
-        password=db.Column(db.String(50),nullable=False)
-        email = db.Column(db.String(100),nullable=False)
-        isOwner=db.Column(db.String(10),nullable=False)
-        token=db.Column(db.String(50),nullable=False)
-        age=db.Column(db.String(50),nullable=False)
-        gender=db.Column(db.String(50),nullable=False)
-        isAvailable=db.Column(db.String(50),nullable=False)
-        bio=db.Column(db.String(50),nullable=False)
-        categoryType = db.Column(db.String(50),nullable=False)
-        categoryLevel=db.Column(db.String(50),nullable=False)
-        city= db.Column(db.String(50),nullable=False)
-        state=db.Column(db.String(50),nullable=False)
         
 
 # @app.route("/")
@@ -618,6 +442,7 @@ def returnacts():
 #     return ""
 
 #api for getting from user's list
+
 @app.route("/ru",methods=['GET'])
 def returnusers():
     
@@ -642,6 +467,55 @@ def returnusers():
 
     else:
         return ({'status':'FAIL'})
+    
+
+
+
+
+class Activities(db.Model):
+        activityName=db.Column(db.Integer,nullable=False)
+        activityDescription=db.Column(db.Integer,nullable=False)
+        activityOrganizer = db.Column(db.Integer,nullable=False)
+        activityVenueId=db.Column(db.Integer,primary_key=True,nullable=False)
+        activityVenueName= db.Column(db.String(100),nullable=False)
+        activityVenueAddress=db.Column(db.String(10),nullable=False)
+        activityLocation=db.Column(db.String(50),nullable=False)
+        activityDate=db.Column(db.JSON)
+        activityTime=db.Column(db.JSON)
+        activityCity=db.Column(db.Text(25))
+        activityState=db.Column(db.Text(25))
+        activityCategory = db.Column(db.Text(25))
+        activityAgeRange=db.Column(db.Text(25))
+        activityCost=db.Column("activityCost", db.Text(25))
+
+
+class Accounts(db.Model):
+        firstName=db.Column(db.String(50),nullable=False)
+        lastName=db.Column(db.String(50),nullable=False)
+        userName= db.Column(db.String(50),primary_key=True,nullable=False)
+        password=db.Column(db.String(50),nullable=False)
+        email = db.Column(db.String(100),nullable=False)
+        isOwner=db.Column(db.String(10),nullable=False)
+        token=db.Column(db.String(50),nullable=False)
+        age=db.Column(db.String(50),nullable=False)
+        gender=db.Column(db.String(50),nullable=False)
+        isAvailable=db.Column(db.String(50),nullable=False)
+        bio=db.Column(db.String(50),nullable=False)
+        categoryType = db.Column(db.String(50),nullable=False)
+        categoryLevel=db.Column(db.String(50),nullable=False)
+        city= db.Column(db.String(50),nullable=False)
+        state=db.Column(db.String(50),nullable=False)
+        
+
+# @app.route("/")
+# def hello():
+#     return "Welcome to backend"
+
+
+
+
+
+
 
 
     
