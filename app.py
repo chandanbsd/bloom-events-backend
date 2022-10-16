@@ -338,8 +338,65 @@ def returnacts():
     else:
         return ({'status':'FAIL'})
 
+#api for user's list:
+# @app.route("/users",methods=['POST'])
+# def fusers():
+#     got=request.get_json()#get users from request
+#     print(got)#print users
+#     usersobj=Accounts(
+#         firstName=got['firstName'],
+#         lastName=got['lastName'],
+#         userName=got['userName'],
+#         password=got['password'],
+#         email=got['email'],
+#         isOwner=got['isOwner'],
+#         token=got['token'],
+#         age=got['age'],
+#         gender=got['gender'],
+#         isAvailable=got['isAvailable'],
+#         bio=got['bio'],
+#         categoryType=got['categoryType'],
+#         categoryLevel=got['categoryLevel'],
+#         city=got['city'],
+#         state=got['state']
+#         )
 
+#     db.session.add(usersobj)
+
+#     db.session.commit()
+
+#     print(usersobj)
+
+#     # got=request.get_json()
+#     # print(got)
+#     # print(got['activityId'])
+#     return ""
+
+#api for getting from user's list
+@app.route("/ru",methods=['GET'])
+def returnusers():
     
+    q=Accounts.query.all()
+    
+    if len(q):
+        all_users=[{"userName":Accounts.userName,
+                        "activityHrCost":Accounts.firstName,
+                        "activityId":Accounts.lastName,
+                        "age":Accounts.age,
+                        "gender":Accounts.gender,
+                        "isAvailable":Accounts.isAvailable,
+                        "bio":Accounts.bio,
+                        "categoryType":Accounts.categoryType,
+                        "categoryLevel":Accounts.categoryLevel,
+                        "city":Accounts.city,
+                        "state":Accounts.state,
+                       } for Accounts in q]
+        
+        return jsonify({'status':'OK',
+                        'body':all_users})
+
+    else:
+        return ({'status':'FAIL'})
     
 
 
