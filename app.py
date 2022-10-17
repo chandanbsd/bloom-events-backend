@@ -115,12 +115,16 @@ def register():
         account = cursor.fetchone()
         if account:
             msg = 'Account already exists !'
-        elif not re.match(r'[^@]+@[^@]+\.[^@]+', email):
-            msg = 'Invalid email address !'
-        elif not re.match(r'[A-Za-z0-9]+', username):
-            msg = 'Username must contain only characters and numbers !'
-        elif not username or not password or not email:
-            msg = 'Please fill out the form !'
+            return ({'status':'FAIL'}) 
+        # elif not re.match(r'[^@]+@[^@]+\.[^@]+', email):
+        #     msg = 'Invalid email address !'
+        #     return ({'status':'FAIL'}) 
+        # elif not re.match(r'[A-Za-z0-9]+', username):
+        #     msg = 'Username must contain only characters and numbers !'
+        #     return ({'status':'FAIL'}) 
+        # elif not username or not password or not email:
+        #     msg = 'Please fill out the form !'
+        #     return ({'status':'FAIL'}) 
         else:
             cursor.execute('INSERT INTO accounts VALUES (%s,%s, % s, % s, % s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)', (first_name,last_name,username, password, email,owner,token,age,gender , isAvailable,bio, categoryType, categoryLevel, city, state))
 
@@ -133,20 +137,77 @@ def register():
 def speciallogin():
     msg = ''
 
-    if request.method == 'POST' and 'firstName' in request.json and 'lastName' in request.json and 'userName' in request.json  and 'email' in request.json  and 'isOwner' in request.json:
+    if request.method == 'POST' and 'email' in request.json:
 
+        
+        email = request.json['email']  
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)   
+        cursor.execute('SELECT * FROM accounts WHERE email = % s', (email, ))
+        account = cursor.fetchone()
+        print(account, email)
+        if account:
+            return jsonify({'status': 'OK',
+                'body':{
+                    'firstName':account['firstName'],
+                    'lastName':account['lastName'],
+                    'userName':account['userName'],
+                    'email':account['email'],
+                    'isOwner':account['isOwner'],
+                    'age':account['age'],
+                    'gender':account['gender'],
+                    'isAvailable':account['isAvailable'],
+                    'bio':account['bio'],
+                    'categoryType':account['categoryType'],
+                    'categoryLevel':account['categoryLevel'],
+                    'city':account['city'],
+                    'state':account['state']
+                }})
+            
+        else:
+            
+            return jsonify({'status':'FAIL'})
+
+@app.route('/specialregister', methods =['GET', 'POST'])
+def specialregister():
+    msg = ''
+    print(request.method)
+
+    if request.method == 'POST' and 'firstName' in request.json and 'lastName' in request.json and 'userName' in request.json  and 'email' in request.json  and 'isOwner' in request.json and 'age' in request.json and 'gender' in request.json and 'isAvailable' in request.json and 'bio' in request.json and 'categoryType' in request.json and 'categoryLevel' in request.json and 'city' in request.json and 'state' in request.json:
         first_name = request.json['firstName']
         last_name = request.json['lastName']
         username = request.json['userName']
         email = request.json['email']
-
+        age=request.json['age']
+        gender=request.json['gender']
+        isAvailable=request.json['isAvailable']
+        bio=request.json['bio']
+        categoryType=request.json['categoryType']
+        categoryLevel=request.json['categoryLevel']
+        city=request.json['city']
+        state=request.json['state']
         owner=request.json['isOwner']
         token="N"
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)   
     
         cursor.execute('SELECT * FROM accounts WHERE email = % s', (email, ))
         account = cursor.fetchone()
-        print(account, email)
+        
+        cursor.execute('SELECT userName FROM accounts')
+        accountList = cursor.fetchall()
+        takenList = []
+        for val in accountList:
+            takenList.append(val['userName'])
+
+        print(takenList)
+        if username in takenList:
+            return jsonify({'status':'FAIL'})
+
+     
+        cursor.execute('INSERT INTO accounts VALUES (%s,%s, % s, % s, % s,%s, %s,%s,%s,%s,%s,%s,%s,%s,%s)', (first_name,last_name,username, "null",email,owner,token,age,gender , isAvailable,bio, categoryType, categoryLevel, city, state ))
+        mysql.connection.commit()
+        cursor.execute('SELECT * FROM accounts WHERE email = % s', (email, ))
+        account =  cursor.fetchone()
+
         if account:
             return jsonify({'status': 'OK',
             'body':{
@@ -154,41 +215,26 @@ def speciallogin():
             'lastName':account['lastName'],
             'userName':account['userName'],
             'email':account['email'],
-            'isOwner':account['isOwner']}})
-            
+            'isOwner':account['isOwner'],
+            'age':account['age'],
+            'gender':account['gender'],
+            'isAvailable':account['isAvailable'],
+            'bio':account['bio'],
+            'categoryType':account['categoryType'],
+            'categoryLevel':account['categoryLevel'],
+            'city':account['city'],
+            'state':account['state']
+            }})
         else:
-            print("Entered User Creation")
-            cursor.execute('SELECT userName FROM accounts')
-            accountList = cursor.fetchall()
-            takenList = []
-            for val in accountList:
-                takenList.append(val['userName'])
-            
-            if username in takenList:
-                return jsonify({'status':'FAIL'})
+            return jsonify({'status':'FAIL'})
 
-            cursor.execute('INSERT INTO accounts VALUES (%s,%s, % s, % s, % s,%s, %s)', (first_name,last_name,username, "null",email,owner,token ))
-            mysql.connection.commit()
-            cursor.execute('SELECT * FROM accounts WHERE email = % s', (email, ))
-            account =  cursor.fetchone()
+    else:
+        return jsonify({'status':'FAIL'})
 
-            if account:
-                return jsonify({'status': 'OK',
-                'body':{
-                    'firstName':account['firstName'],
-                'lastName':account['lastName'],
-                'userName':account['userName'],
-                'email':account['email'],
-                'isOwner':account['isOwner']}})
-            else:
-                return jsonify({'status':'FAIL'})
-
-    
 
 @app.route('/edit', methods =['GET', 'POST'])
 def edit():
     msg = ''
-    print(request.json)
     if request.method == 'POST' and 'firstName' in request.json and 'lastName' in request.json and 'userName' in request.json and 'password' in request.json and 'email' in request.json  and 'isOwner' in request.json and 'age' in request.json and 'gender' in request.json and 'isAvailable' in request.json and 'bio' in request.json and 'categoryType' in request.json and 'categoryLevel' in request.json and 'city' in request.json and 'state' in request.json:
         first_name = request.json['firstName']
         last_name = request.json['lastName']
@@ -217,13 +263,26 @@ def edit():
             mysql.connection.commit()
             cursor.execute('SELECT * FROM accounts WHERE userName = % s', (username, ))
             account = cursor.fetchone()
+            print("From edit", account)
             return jsonify({'status': 'OK',
             'body':{
+                
                 'firstName':account['firstName'],
             'lastName':account['lastName'],
             'userName':account['userName'],
             'email':account['email'],
-            'isOwner':account['isOwner']}})
+            'isOwner':account['isOwner'],
+            'age':account['age'],
+            'gender':account['gender'],
+            'isAvailable':account['isAvailable'],
+            'bio':account['bio'],
+            'categoryType':account['categoryType'],
+            'categoryLevel':account['categoryLevel'],
+            'city':account['city'],
+            'state':account['state']
+
+
+            }})
         else:
             return ({'status':'FAIL'})
     
