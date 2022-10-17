@@ -236,6 +236,7 @@ def specialregister():
 def edit():
     msg = ''
     if request.method == 'POST' and 'firstName' in request.json and 'lastName' in request.json and 'userName' in request.json and 'password' in request.json and 'email' in request.json  and 'isOwner' in request.json and 'age' in request.json and 'gender' in request.json and 'isAvailable' in request.json and 'bio' in request.json and 'categoryType' in request.json and 'categoryLevel' in request.json and 'city' in request.json and 'state' in request.json:
+        print(request.json)
         first_name = request.json['firstName']
         last_name = request.json['lastName']
         username = request.json['userName']
@@ -259,11 +260,11 @@ def edit():
         cursor.execute('SELECT * FROM accounts WHERE userName = % s', (username, ))
         account = cursor.fetchone()
         if account:
-            cursor.execute('Update accounts SET firstName= %s, lastName= %s , password=%s, email=%s , isOwner=%s,age=%s,gender=%s,isAvailable=%s,bio=%s,categoryType=%s,categoryLevel=%s,city=%s,state=%s WHERE userName = % s',(first_name,last_name, password, email,owner, username,age,gender , isAvailable,bio, categoryType, categoryLevel, city, state))
+            cursor.execute('Update accounts SET firstName=%s, lastName=%s , password=%s, email=%s , isOwner=%s, age=%s, gender=%s, isAvailable=%s, bio=%s, categoryType=%s, categoryLevel=%s, city=%s, state=%s WHERE userName = %s', (first_name,last_name, password, email,owner,age,gender , isAvailable,bio, categoryType, categoryLevel, city, state, username,))
             mysql.connection.commit()
             cursor.execute('SELECT * FROM accounts WHERE userName = % s', (username, ))
             account = cursor.fetchone()
-            print("From edit", account)
+            print(account)
             return jsonify({'status': 'OK',
             'body':{
                 
