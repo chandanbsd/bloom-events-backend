@@ -349,8 +349,9 @@ def registervenue():
         venueCategory=request.json['venueCategory']
         venueCity=request.json['venueCity']
         venueState=request.json['venueState']
+        venueState=request.json['venueDescription']
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute('INSERT INTO Venue VALUES (%s,%s, % s, %s, % s,%s,%s, %s,%s,%s)', (venueId,venueOwner,venueName, venueAddress, venueAvailability,venueOpen,venueHrCost,venueCategory,venueCity,venueState))
+        cursor.execute('INSERT INTO Venue VALUES (%s,%s, % s, %s, %s, %s,%s,%s, %s,%s,%s)', (venueId,venueOwner,venueName, venueAddress, venueAvailability,venueOpen,venueHrCost,venueCategory,venueCity,venueState, venueDescription,))
         mysql.connection.commit()
         cursor.execute('SELECT * FROM  Venue')
         data= cursor.fetchall() 
@@ -494,8 +495,8 @@ def returnusers():
     
     if len(q):
         all_users=[{"userName":Accounts.userName,
-                        "activityHrCost":Accounts.firstName,
-                        "activityId":Accounts.lastName,
+                        "firstName":Accounts.firstName,
+                        "lastName":Accounts.lastName,
                         "age":Accounts.age,
                         "gender":Accounts.gender,
                         "isAvailable":Accounts.isAvailable,
