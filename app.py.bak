@@ -20,11 +20,12 @@ app = Flask(__name__)
 CORS(app)
 mail= Mail(app)
 app.secret_key = 'your secret key'
-app.config['MYSQL_HOST'] = '127.0.0.1'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'root'
-app.config['MYSQL_DB'] = 'bloomdb'
-temp=app.config['SQLALCHEMY_DATABASE_URI'] ='mysql://root:root@localhost:3306/bloomdb' 
+app.config['MYSQL_HOST'] = 'remotemysql.com'
+app.config['MYSQL_USER'] = '204dK31KCq'
+app.config['MYSQL_PASSWORD'] = 'NN70aPaxQH'
+app.config['MYSQL_DB'] = '204dK31KCq'
+temp=app.config['SQLALCHEMY_DATABASE_URI'] ='mysql://204dK31KCq:NN70aPaxQH@remotemysql.com:3306/204dK31KCq' 
+# “dialect+driver://username:password@host:port/database”
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 app.config['MAIL_SERVER']='smtp.gmail.com'
