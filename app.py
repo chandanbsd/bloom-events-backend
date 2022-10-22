@@ -43,7 +43,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db=SQLAlchemy(app)
 
 
-@app.route('/')
+
 @app.route('/login', methods =['GET', 'POST'])
 def login():
     print(request.json)
