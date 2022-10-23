@@ -365,6 +365,7 @@ def registervenue():
     elif request.method == 'POST':
         return jsonify({'status':'FAIL'})
 
+    return ""
 
 @app.route('/venuelist', methods =['GET', 'POST'])
 
