@@ -306,6 +306,7 @@ def reset():
             return jsonify({"status":"OK"})
         else:
             return jsonify({"status":"FAIL"})
+    return ""
 
 @app.route('/password_reset', methods =['GET', 'POST'])
 def pass_reset():
