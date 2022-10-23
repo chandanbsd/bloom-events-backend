@@ -20,11 +20,11 @@ app = Flask(__name__)
 CORS(app)
 mail= Mail(app)
 app.secret_key = 'your secret key'
-app.config['MYSQL_HOST'] = 'remotemysql.com'
-app.config['MYSQL_USER'] = '204dK31KCq'
-app.config['MYSQL_PASSWORD'] = 'NN70aPaxQH'
-app.config['MYSQL_DB'] = '204dK31KCq'
-temp=app.config['SQLALCHEMY_DATABASE_URI'] ='mysql://204dK31KCq:NN70aPaxQH@remotemysql.com:3306/204dK31KCq' 
+app.config['MYSQL_HOST'] = 'sql6.freemysqlhosting.net'
+app.config['MYSQL_USER'] = 'sql6528588'
+app.config['MYSQL_PASSWORD'] = 'zku53UvvBh'
+app.config['MYSQL_DB'] = 'sql6528588'
+temp=app.config['SQLALCHEMY_DATABASE_URI'] ='mysql://sql6528588:zku53UvvBh@sql6.freemysqlhosting.net:3306/sql6528588' 
 # “dialect+driver://username:password@host:port/database”
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
