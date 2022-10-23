@@ -75,7 +75,7 @@ def login():
             # return render_template('index.html', msg = msg)
         else:
             return ({'status':'FAIL'})
-    return 
+    return " "
     
  
 @app.route('/logout',methods =['GET', 'POST'])
@@ -85,7 +85,6 @@ def logout():
     session.pop('userName', None)
     return {
         'status':"OK"
-
     }
  
 @app.route('/register', methods =['GET', 'POST'])
@@ -133,6 +132,7 @@ def register():
             return ({'status':'OK'})
     elif request.method == 'POST':
         return ({'status':'FAIL'}) 
+    return ""
 
 @app.route('/speciallogin', methods =['GET', 'POST'])
 def speciallogin():
@@ -167,6 +167,7 @@ def speciallogin():
         else:
             
             return jsonify({'status':'FAIL'})
+    return " "
 
 @app.route('/specialregister', methods =['GET', 'POST'])
 def specialregister():
@@ -232,6 +233,10 @@ def specialregister():
     else:
         return jsonify({'status':'FAIL'})
 
+    return ""
+
+
+
 
 @app.route('/edit', methods =['GET', 'POST'])
 def edit():
@@ -288,6 +293,7 @@ def edit():
         else:
             return ({'status':'FAIL'})
     
+    return ""
 
 @app.route('/reset_mail', methods =['GET', 'POST'])
 def reset():
