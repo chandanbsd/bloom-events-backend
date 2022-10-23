@@ -327,6 +327,7 @@ def pass_reset():
         else:
             return {"status":"FAIL"}
 
+    return ""
 
 
 @app.route('/registervenue', methods =['GET', 'POST'])
