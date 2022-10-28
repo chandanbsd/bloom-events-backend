@@ -17,14 +17,14 @@ from sqlalchemy import select
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
-CORS(app)
-mail= Mail(app)
+# CORS(app)
+# mail= Mail(app)
 app.secret_key = 'your secret key'
-app.config['MYSQL_HOST'] = 'sql6.freemysqlhosting.net'
-app.config['MYSQL_USER'] = 'sql6528588'
-app.config['MYSQL_PASSWORD'] = 'zku53UvvBh'
-app.config['MYSQL_DB'] = 'sql6528588'
-temp=app.config['SQLALCHEMY_DATABASE_URI'] ='mysql://sql6528588:zku53UvvBh@sql6.freemysqlhosting.net:3306/sql6528588' 
+app.config['MYSQL_HOST'] = 'localhost'
+app.config['MYSQL_USER'] = 'root'
+app.config['MYSQL_PASSWORD'] = 'root'
+app.config['MYSQL_DB'] = 'bloomdb'
+temp=app.config['SQLALCHEMY_DATABASE_URI'] ='mysql://root:root@localhost:3306/bloomdb' 
 # “dialect+driver://username:password@host:port/database”
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -408,20 +408,21 @@ def factivity():
 
     print(got)
     actobj=Activities(
+        activityId = got['activityId'],
         activityName=got['activityName'],
         activityDescription=got['activityDescription'],
-        activityOrganizer=got['activityOrganizer'],
-        activityVenueId=got['activityVenueId'],
-        activityVenueName=got['activityVenueName'],
-        activityVenueAddress=got['activityVenueAddress'],
+        activityCapacity=got['activityCapacity'],
         activityLocation=got['activityLocation'],
+        activityCategory = got['activityCategory'],
+        activityAgeRange=got['activityAgeRange'],
+        activityCost=got['activityCost'],
+        activityCostAmount=got['activityCostAmount'],
+        activityOrganizer = got['activityOrganizer'],
+        activityVenueId=got['activityVenueId'],
         activityDate=got['activityDate'],
         activityTime=got['activityTime'],
-        activityCity=got['activityCity'],
-        activityState=got['activityState'],
-        activityCategory=got['activityCategory'],
-        activityAgeRange=got['activityAgeRange'],
-        activityCost=got['activityCost']
+        activityVenueCost=got['activityVenueCost'],
+        activityBookingDate=got['activityBookingDate'],
         )
 
     db.session.add(actobj)
@@ -441,20 +442,22 @@ def returnacts():
     q=Activities.query.all()
     
     if len(q):
-        all_activities=[{ "activityName":Activities.activityName,
+        all_activities=[{ "activityId":Activities.activityId,
+        "activityName":Activities.activityName,
         "activityDescription":Activities.activityDescription,
-        "activityOrganizer":Activities.activityOrganizer,
-        "activityVenueId":Activities.activityVenueId,
-        "activityVenueName":Activities.activityVenueName,
-        "activityVenueAddress":Activities.activityVenueAddress,
+        "activityCapacity":Activities.activityCapacity,
         "activityLocation":Activities.activityLocation,
-        "activityDate":Activities.activityDate,
-        "activityTime":Activities.activityTime,
-        "activityCity":Activities.activityCity,
-        "activityState":Activities.activityState,
         "activityCategory":Activities.activityCategory,
         "activityAgeRange":Activities.activityAgeRange,
-        "activityCost":Activities.activityCost} for Activities in q]
+        "activityCost":Activities.activityCost,
+        "activityCostAmount":Activities.activityCostAmount,
+        "activityOrganizer": Activities.activityOrganizer,
+        "activityVenueId":Activities.activityVenueId,
+        "activityDate":Activities.activityDate,
+        "activityTime":Activities.activityTime,
+        "activityVenueCost":Activities.activityVenueCost,
+        "activityBookingDate":Activities.activityBookingDate
+        } for Activities in q]
         
         return jsonify({'status':'OK',
                         'body':all_activities})
@@ -524,26 +527,29 @@ def returnusers():
         return ({'status':'FAIL'})
     
 
-
-
-
 class Activities(db.Model):
-        activityName=db.Column(db.Integer,nullable=False)
-        activityDescription=db.Column(db.Integer,nullable=False)
-        activityOrganizer = db.Column(db.Integer,nullable=False)
-        activityVenueId=db.Column(db.Integer,primary_key=True,nullable=False)
-        activityVenueName= db.Column(db.String(100),nullable=False)
-        activityVenueAddress=db.Column(db.String(10),nullable=False)
-        activityLocation=db.Column(db.String(50),nullable=False)
-        activityDate=db.Column(db.JSON)
-        activityTime=db.Column(db.JSON)
-        activityCity=db.Column(db.Text(25))
-        activityState=db.Column(db.Text(25))
+        activityId=db.Column(db.Integer,primary_key=True,nullable=False)
+        activityName=db.Column(db.Text(25),nullable=False)
+        activityDescription=db.Column(db.Text(25),nullable=False)
+        activityCapacity=db.Column(db.Integer,nullable=False)
+        activityLocation=db.Column(db.Text(25),nullable=False)
         activityCategory = db.Column(db.Text(25))
         activityAgeRange=db.Column(db.Text(25))
-        activityCost=db.Column("activityCost", db.Text(25))
-
-
+        activityCost=db.Column(db.Text(25))
+        activityCostAmount=db.Column(db.Integer,nullable=False)
+        activityOrganizer = db.Column(db.String(50),nullable=False)
+        activityVenueId=db.Column(db.Integer,nullable=False)
+        #activityVenueName= db.Column(db.String(100),nullable=False)
+        #activityVenueAddress=db.Column(db.String(10),nullable=False)
+        activityDate=db.Column(db.Text(20))
+        activityTime=db.Column(db.JSON)# Datatype array not supported in MySql.
+        #activityCity=db.Column(db.Text(25))
+        #activityState=db.Column(db.Text(25))
+        activityVenueCost=db.Column(db.Integer,nullable=False)
+        activityBookingDate=db.Column(db.Text(100))
+        
+        
+        
 class Accounts(db.Model):
         firstName=db.Column(db.String(50),nullable=False)
         lastName=db.Column(db.String(50),nullable=False)
