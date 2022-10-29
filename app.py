@@ -14,10 +14,13 @@ import sqlalchemy
 from sqlalchemy.types import JSON
 from sqlalchemy.ext.mutable import MutableDict
 from sqlalchemy import select
+from sqlalchemy import create_engine
 from flask_sqlalchemy import SQLAlchemy
 
 from sqlalchemy import Column, ForeignKey, Integer, Table
 from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.orm import sessionmaker
+
 
 Base = declarative_base()
 
@@ -29,8 +32,13 @@ app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = 'root'
 app.config['MYSQL_DB'] = 'bloomdb'
-temp=app.config['SQLALCHEMY_DATABASE_URI'] ='mysql://root:root@localhost:3306/bloomdb' 
+db_uri=app.config['SQLALCHEMY_DATABASE_URI'] ='mysql://root:root@localhost:3306/bloomdb' 
 # “dialect+driver://username:password@host:port/database”
+db_engine = create_engine(db_uri)
+db_connect = db_engine.connect()
+session=sessionmaker()
+session.configure(bind=db_engine)
+db_session=session()
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 app.config['MAIL_SERVER']='smtp.gmail.com'
@@ -471,41 +479,41 @@ def returnacts():
     else:
         return ({'status':'FAIL'})
 
-#api for user's list:
-# @app.route("/users",methods=['POST'])
-# def fusers():
-#     got=request.get_json()#get users from request
-#     print(got)#print users
-#     usersobj=Accounts(
-#         firstName=got['firstName'],
-#         lastName=got['lastName'],
-#         userName=got['userName'],
-#         password=got['password'],
-#         email=got['email'],
-#         isOwner=got['isOwner'],
-#         token=got['token'],
-#         age=got['age'],
-#         gender=got['gender'],
-#         isAvailable=got['isAvailable'],
-#         bio=got['bio'],
-#         categoryType=got['categoryType'],
-#         categoryLevel=got['categoryLevel'],
-#         city=got['city'],
-#         state=got['state']
-#         )
+# api for user's list:
+@app.route("/users",methods=['POST'])
+def fusers():
+    got=request.get_json()#get users from request
+    print(got)#print users
+    usersobj=Accounts(
+        firstName=got['firstName'],
+        lastName=got['lastName'],
+        userName=got['userName'],
+        password=got['password'],
+        email=got['email'],
+        isOwner=got['isOwner'],
+        token=got['token'],
+        age=got['age'],
+        gender=got['gender'],
+        isAvailable=got['isAvailable'],
+        bio=got['bio'],
+        categoryType=got['categoryType'],
+        categoryLevel=got['categoryLevel'],
+        city=got['city'],
+        state=got['state']
+        )
 
-#     db.session.add(usersobj)
+    db.session.add(usersobj)
 
-#     db.session.commit()
+    db.session.commit()
 
-#     print(usersobj)
+    print(usersobj)
 
-#     # got=request.get_json()
-#     # print(got)
-#     # print(got['activityId'])
-#     return ""
+    # got=request.get_json()
+    # print(got)
+    # print(got['activityId'])
+    return ""
 
-#api for getting from user's list
+# api for getting from user's list
 
 @app.route("/ru",methods=['GET'])
 def returnusers():
@@ -556,6 +564,26 @@ def reg_for_act():
     # print(got)
     # print(got['activityId'])
     return " "
+
+@app.route("/Registered_acts",methods=['POST'])
+def acts_registered():
+    gotuser=request.get_json()
+    print(gotuser['userName'])
+
+    q=db_session.query(regact.activityId).filter(regact.userName==gotuser['userName']).all()
+    
+    ans=[]
+    for i in q:
+        ans.append(i[0])
+    print(ans)
+
+    # return ""  
+    return jsonify({'status':'OK',
+                        'body':ans})
+
+    
+
+
     
 
 class Activities(db.Model):
