@@ -16,6 +16,11 @@ from sqlalchemy.ext.mutable import MutableDict
 from sqlalchemy import select
 from flask_sqlalchemy import SQLAlchemy
 
+from sqlalchemy import Column, ForeignKey, Integer, Table
+from sqlalchemy.orm import declarative_base, relationship
+
+Base = declarative_base()
+
 app = Flask(__name__)
 # CORS(app)
 # mail= Mail(app)
@@ -405,13 +410,13 @@ def venuelist():
 @app.route("/activity",methods=['POST'])
 def factivity():
     got=request.get_json()
-
     print(got)
     actobj=Activities(
         activityId = got['activityId'],
         activityName=got['activityName'],
         activityDescription=got['activityDescription'],
         activityCapacity=got['activityCapacity'],
+        activityremcap=got['activityremcap'],
         activityLocation=got['activityLocation'],
         activityCategory = got['activityCategory'],
         activityAgeRange=got['activityAgeRange'],
@@ -446,6 +451,7 @@ def returnacts():
         "activityName":Activities.activityName,
         "activityDescription":Activities.activityDescription,
         "activityCapacity":Activities.activityCapacity,
+        "activityremcap":Activities.activityremcap,
         "activityLocation":Activities.activityLocation,
         "activityCategory":Activities.activityCategory,
         "activityAgeRange":Activities.activityAgeRange,
@@ -525,13 +531,40 @@ def returnusers():
 
     else:
         return ({'status':'FAIL'})
+
+#Route for activity Registration.
+@app.route("/RegActivity",methods=['POST'])
+def reg_for_act():
+    
+    got=request.get_json()
+    print(got)
+    regactobj=regact(
+        activityId = got['activityId'],
+        userName=got['userName']
+        )
+
+    db.session.add(regactobj)
+    db.session.commit()
+    print(regactobj)
+
+    #Decrementing activity capacity.
+    regactobj.activity.activityremcap -=1
+    db.session.commit()
+
+
+    # got=request.get_json()
+    # print(got)
+    # print(got['activityId'])
+    return " "
     
 
 class Activities(db.Model):
+        __tablename__ = "activities"
         activityId=db.Column(db.Integer,primary_key=True,nullable=False)
         activityName=db.Column(db.Text(25),nullable=False)
         activityDescription=db.Column(db.Text(25),nullable=False)
         activityCapacity=db.Column(db.Integer,nullable=False)
+        activityremcap=db.Column(db.Integer,nullable=False)
         activityLocation=db.Column(db.Text(25),nullable=False)
         activityCategory = db.Column(db.Text(25))
         activityAgeRange=db.Column(db.Text(25))
@@ -551,6 +584,7 @@ class Activities(db.Model):
         
         
 class Accounts(db.Model):
+        __tablename__ = "accounts"
         firstName=db.Column(db.String(50),nullable=False)
         lastName=db.Column(db.String(50),nullable=False)
         userName= db.Column(db.String(50),primary_key=True,nullable=False)
@@ -567,6 +601,15 @@ class Accounts(db.Model):
         city= db.Column(db.String(50),nullable=False)
         state=db.Column(db.String(50),nullable=False)
         
+
+class regact(db.Model):
+        __tablename__ = "regact"
+        regid=db.Column(db.Integer,primary_key=True)
+        activityId=db.Column(db.Integer,ForeignKey ("activities.activityId"))
+        userName=db.Column(db.Text,ForeignKey ("accounts.userName"))
+        activity=relationship("Activities")
+        account=relationship("Accounts")
+
 
 
 
