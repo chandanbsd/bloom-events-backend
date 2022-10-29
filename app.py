@@ -13,10 +13,9 @@ import os
 import sqlalchemy
 from sqlalchemy.types import JSON
 from sqlalchemy.ext.mutable import MutableDict
-from sqlalchemy import select
+from sqlalchemy import select,delete,update
 from sqlalchemy import create_engine
 from flask_sqlalchemy import SQLAlchemy
-
 from sqlalchemy import Column, ForeignKey, Integer, Table
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.orm import sessionmaker
@@ -563,6 +562,32 @@ def reg_for_act():
     # got=request.get_json()
     # print(got)
     # print(got['activityId'])
+    return " "
+
+@app.route("/CancelActivity",methods=['POST'])
+def cancel_act():
+    
+    got=request.get_json()
+    print(got)
+
+    
+
+    # db.session.query(Activities).filter(Activities.activityId==
+    # got['activityId']).update({Activities.activityRemainingCapacity:Activities.activityRemainingCapacity+1})
+    # db.session.commit()
+    activity=db.session.query(Activities).filter(Activities.activityId==got["activityId"]).first()
+    activity.activityRemainingCapacity += 1
+    db.session.commit()
+    d = db.session.query(regact).filter(regact.userName==got['userName'],
+                                        regact.activityId==got['activityId']).all()
+    print(d)
+
+    for record in d:
+        print(record)
+        db.session.delete(record)
+        db.session.commit()
+
+    
     return " "
 
 @app.route("/Registered_acts",methods=['POST'])
