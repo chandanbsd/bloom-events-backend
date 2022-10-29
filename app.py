@@ -424,7 +424,7 @@ def factivity():
         activityName=got['activityName'],
         activityDescription=got['activityDescription'],
         activityCapacity=got['activityCapacity'],
-        activityremcap=got['activityremcap'],
+        activityRemainingCapacity=got['activityRemainingCapacity'],
         activityLocation=got['activityLocation'],
         activityCategory = got['activityCategory'],
         activityAgeRange=got['activityAgeRange'],
@@ -459,7 +459,7 @@ def returnacts():
         "activityName":Activities.activityName,
         "activityDescription":Activities.activityDescription,
         "activityCapacity":Activities.activityCapacity,
-        "activityremcap":Activities.activityremcap,
+        "activityRemainingCapacity":Activities.activityReminingCapacity,
         "activityLocation":Activities.activityLocation,
         "activityCategory":Activities.activityCategory,
         "activityAgeRange":Activities.activityAgeRange,
@@ -556,7 +556,7 @@ def reg_for_act():
     print(regactobj)
 
     #Decrementing activity capacity.
-    regactobj.activity.activityremcap -=1
+    regactobj.activity.activityRemainingCapacity -=1
     db.session.commit()
 
 
@@ -592,7 +592,7 @@ class Activities(db.Model):
         activityName=db.Column(db.Text(25),nullable=False)
         activityDescription=db.Column(db.Text(25),nullable=False)
         activityCapacity=db.Column(db.Integer,nullable=False)
-        activityremcap=db.Column(db.Integer,nullable=False)
+        activityRemainingCapacity=db.Column(db.Integer,nullable=False)
         activityLocation=db.Column(db.Text(25),nullable=False)
         activityCategory = db.Column(db.Text(25))
         activityAgeRange=db.Column(db.Text(25))
