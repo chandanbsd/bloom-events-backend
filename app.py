@@ -24,7 +24,7 @@ from sqlalchemy.orm import declarative_base, relationship
 Base = declarative_base()
 
 app = Flask(__name__)
-# CORS(app)
+CORS(app)
 # mail= Mail(app)
 app.secret_key = 'your secret key'
 app.config['MYSQL_HOST'] = 'localhost'
@@ -74,11 +74,19 @@ def login():
             session["userName"]=account["userName"]
             return jsonify({'status': 'OK',
             'body':{
-                'firstName':account['firstName'],
+                'userName':account['userName'],
+            'firstName':account['firstName'],
             'lastName':account['lastName'],
-            'userName':account['userName'],
+            'age':account['age'],
+            'gender':account['gender'],
+             'isAvailable':account['isAvailable'],
+            'bio':account['bio'],
+            'categoryType':account['categoryType'],
+            'categoryLevel':account['categoryLevel'],
+            'city':account['city'],
+            'state':account['state'],
             'email':account['email'],
-            'isOwner':account['isOwner']}})
+            }})
             # return render_template('index.html', msg = msg)
         else:
             return ({'status':'FAIL'})
@@ -526,6 +534,7 @@ def returnusers():
                         "categoryLevel":Accounts.categoryLevel,
                         "city":Accounts.city,
                         "state":Accounts.state,
+                        "email":Accounts.state,
                        } for Accounts in q]
         
         return jsonify({'status':'OK',
