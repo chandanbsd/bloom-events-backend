@@ -13,8 +13,15 @@ import os
 import sqlalchemy
 from sqlalchemy.types import JSON
 from sqlalchemy.ext.mutable import MutableDict
-from sqlalchemy import select
+from sqlalchemy import select,delete,update
+from sqlalchemy import create_engine
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import Column, ForeignKey, Integer, Table
+from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.orm import sessionmaker
+
+
+Base = declarative_base()
 
 app = Flask(__name__)
 # CORS(app)
@@ -24,8 +31,13 @@ app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = 'root'
 app.config['MYSQL_DB'] = 'bloomdb'
-temp=app.config['SQLALCHEMY_DATABASE_URI'] ='mysql://root:root@localhost:3306/bloomdb' 
+db_uri=app.config['SQLALCHEMY_DATABASE_URI'] ='mysql://root:root@localhost:3306/bloomdb' 
 # “dialect+driver://username:password@host:port/database”
+db_engine = create_engine(db_uri)
+db_connect = db_engine.connect()
+session=sessionmaker()
+session.configure(bind=db_engine)
+db_session=session()
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 app.config['MAIL_SERVER']='smtp.gmail.com'
@@ -405,13 +417,13 @@ def venuelist():
 @app.route("/activity",methods=['POST'])
 def factivity():
     got=request.get_json()
-
     print(got)
     actobj=Activities(
         activityId = got['activityId'],
         activityName=got['activityName'],
         activityDescription=got['activityDescription'],
         activityCapacity=got['activityCapacity'],
+        activityRemainingCapacity=got['activityRemainingCapacity'],
         activityLocation=got['activityLocation'],
         activityCategory = got['activityCategory'],
         activityAgeRange=got['activityAgeRange'],
@@ -446,6 +458,7 @@ def returnacts():
         "activityName":Activities.activityName,
         "activityDescription":Activities.activityDescription,
         "activityCapacity":Activities.activityCapacity,
+        "activityRemainingCapacity":Activities.activityReminingCapacity,
         "activityLocation":Activities.activityLocation,
         "activityCategory":Activities.activityCategory,
         "activityAgeRange":Activities.activityAgeRange,
@@ -465,41 +478,41 @@ def returnacts():
     else:
         return ({'status':'FAIL'})
 
-#api for user's list:
-# @app.route("/users",methods=['POST'])
-# def fusers():
-#     got=request.get_json()#get users from request
-#     print(got)#print users
-#     usersobj=Accounts(
-#         firstName=got['firstName'],
-#         lastName=got['lastName'],
-#         userName=got['userName'],
-#         password=got['password'],
-#         email=got['email'],
-#         isOwner=got['isOwner'],
-#         token=got['token'],
-#         age=got['age'],
-#         gender=got['gender'],
-#         isAvailable=got['isAvailable'],
-#         bio=got['bio'],
-#         categoryType=got['categoryType'],
-#         categoryLevel=got['categoryLevel'],
-#         city=got['city'],
-#         state=got['state']
-#         )
+# api for user's list:
+@app.route("/users",methods=['POST'])
+def fusers():
+    got=request.get_json()#get users from request
+    print(got)#print users
+    usersobj=Accounts(
+        firstName=got['firstName'],
+        lastName=got['lastName'],
+        userName=got['userName'],
+        password=got['password'],
+        email=got['email'],
+        isOwner=got['isOwner'],
+        token=got['token'],
+        age=got['age'],
+        gender=got['gender'],
+        isAvailable=got['isAvailable'],
+        bio=got['bio'],
+        categoryType=got['categoryType'],
+        categoryLevel=got['categoryLevel'],
+        city=got['city'],
+        state=got['state']
+        )
 
-#     db.session.add(usersobj)
+    db.session.add(usersobj)
 
-#     db.session.commit()
+    db.session.commit()
 
-#     print(usersobj)
+    print(usersobj)
 
-#     # got=request.get_json()
-#     # print(got)
-#     # print(got['activityId'])
-#     return ""
+    # got=request.get_json()
+    # print(got)
+    # print(got['activityId'])
+    return ""
 
-#api for getting from user's list
+# api for getting from user's list
 
 @app.route("/ru",methods=['GET'])
 def returnusers():
@@ -525,13 +538,98 @@ def returnusers():
 
     else:
         return ({'status':'FAIL'})
+
+#Route for activity Registration.
+@app.route("/RegActivity",methods=['POST'])
+def reg_for_act():
+    
+    got=request.get_json()
+    print(got)
+    regactobj=regact(
+        activityId = got['activityId'],
+        userName=got['userName']
+        )
+
+    db.session.add(regactobj)
+    db.session.commit()
+    print(regactobj)
+
+    #Decrementing activity capacity.
+    regactobj.activity.activityRemainingCapacity -=1
+    db.session.commit()
+
+    activityjoin=db.session.query(Activities).filter(Activities.activityId==got['activityId']).first()
+    organizer=activityjoin.activityOrganizer
+    accountsjoin=db.session.query(Accounts).filter(Accounts.userName==organizer).first()
+    organizeremail=accountsjoin.email
+    print(organizeremail)
+
+    useremail=db.session.query(Accounts).filter(Accounts.userName==got['userName']).first().email
+    print(useremail)
+
+    msg=Message("activity registration complete", sender="eventabloom@gmail.com",recipients=[useremail,organizeremail])
+    msg.body="activity registration complete"
+    mail.send(msg)
+
+    # got=request.get_json()
+    # print(got)
+    # print(got['activityId'])
+    return " "
+
+@app.route("/CancelActivity",methods=['POST'])
+def cancel_act():
+    
+    got=request.get_json()
+    print(got)
+
+    
+
+    # db.session.query(Activities).filter(Activities.activityId==
+    # got['activityId']).update({Activities.activityRemainingCapacity:Activities.activityRemainingCapacity+1})
+    # db.session.commit()
+    activity=db.session.query(Activities).filter(Activities.activityId==got["activityId"]).first()
+    activity.activityRemainingCapacity += 1
+    db.session.commit()
+    d = db.session.query(regact).filter(regact.userName==got['userName'],
+                                        regact.activityId==got['activityId']).all()
+    print(d)
+
+    for record in d:
+        print(record)
+        db.session.delete(record)
+        db.session.commit()
+
+    
+    return " "
+
+@app.route("/Registered_acts",methods=['POST'])
+def acts_registered():
+    gotuser=request.get_json()
+    print(gotuser['userName'])
+
+    q=db_session.query(regact.activityId).filter(regact.userName==gotuser['userName']).all()
+    
+    ans=[]
+    for i in q:
+        ans.append(i[0])
+    print(ans)
+
+    # return ""  
+    return jsonify({'status':'OK',
+                        'body':ans})
+
+    
+
+
     
 
 class Activities(db.Model):
+        __tablename__ = "activities"
         activityId=db.Column(db.Integer,primary_key=True,nullable=False)
         activityName=db.Column(db.Text(25),nullable=False)
         activityDescription=db.Column(db.Text(25),nullable=False)
         activityCapacity=db.Column(db.Integer,nullable=False)
+        activityRemainingCapacity=db.Column(db.Integer,nullable=False)
         activityLocation=db.Column(db.Text(25),nullable=False)
         activityCategory = db.Column(db.Text(25))
         activityAgeRange=db.Column(db.Text(25))
@@ -551,6 +649,7 @@ class Activities(db.Model):
         
         
 class Accounts(db.Model):
+        __tablename__ = "accounts"
         firstName=db.Column(db.String(50),nullable=False)
         lastName=db.Column(db.String(50),nullable=False)
         userName= db.Column(db.String(50),primary_key=True,nullable=False)
@@ -567,6 +666,15 @@ class Accounts(db.Model):
         city= db.Column(db.String(50),nullable=False)
         state=db.Column(db.String(50),nullable=False)
         
+
+class regact(db.Model):
+        __tablename__ = "regact"
+        regid=db.Column(db.Integer,primary_key=True)
+        activityId=db.Column(db.Integer,ForeignKey ("activities.activityId"))
+        userName=db.Column(db.Text,ForeignKey ("accounts.userName"))
+        activity=relationship("Activities")
+        account=relationship("Accounts")
+
 
 
 
