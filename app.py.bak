@@ -18,7 +18,7 @@ from sqlalchemy import create_engine
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, ForeignKey, Integer, Table
 from sqlalchemy.orm import declarative_base, relationship
-from sqlalchemy.orm import sessionmaker
+
 
 
 Base = declarative_base()
@@ -33,12 +33,7 @@ app.config['MYSQL_PASSWORD'] = 'root'
 app.config['MYSQL_DB'] = 'bloomdb'
 db_uri=app.config['SQLALCHEMY_DATABASE_URI'] ='mysql://root:root@localhost:3306/bloomdb' 
 # “dialect+driver://username:password@host:port/database”
-db_engine = create_engine(db_uri)
-db_connect = db_engine.connect()
-session=sessionmaker()
-session.configure(bind=db_engine)
-db_session=session()
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_TR\\ACK_MODIFICATIONS'] = False
 
 app.config['MAIL_SERVER']='smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
@@ -607,7 +602,7 @@ def acts_registered():
     gotuser=request.get_json()
     print(gotuser['userName'])
 
-    q=db_session.query(regact.activityId).filter(regact.userName==gotuser['userName']).all()
+    q=db.session.query(regact.activityId).filter(regact.userName==gotuser['userName']).all()
     
     ans=[]
     for i in q:
