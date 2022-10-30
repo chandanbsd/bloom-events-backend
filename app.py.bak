@@ -558,6 +558,18 @@ def reg_for_act():
     regactobj.activity.activityRemainingCapacity -=1
     db.session.commit()
 
+    activityjoin=db.session.query(Activities).filter(Activities.activityId==got['activityId']).first()
+    organizer=activityjoin.activityOrganizer
+    accountsjoin=db.session.query(Accounts).filter(Accounts.userName==organizer).first()
+    organizeremail=accountsjoin.email
+    print(organizeremail)
+
+    useremail=db.session.query(Accounts).filter(Accounts.userName==got['userName']).first().email
+    print(useremail)
+
+    msg=Message("activity registration complete", sender="eventabloom@gmail.com",recipients=[useremail,organizeremail])
+    msg.body="activity registration complete"
+    mail.send(msg)
 
     # got=request.get_json()
     # print(got)
