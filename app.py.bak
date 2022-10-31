@@ -18,7 +18,7 @@ from sqlalchemy import create_engine
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, ForeignKey, Integer, Table
 from sqlalchemy.orm import declarative_base, relationship
-
+import json
 
 
 Base = declarative_base()
@@ -355,34 +355,34 @@ def pass_reset():
 @app.route('/registervenue', methods =['GET', 'POST'])
 
 def registervenue():
-    
-    if request.method == 'POST' and 'venueOwner' in request.json and 'venueName' in request.json and 'venueAddress' in request.json and 'venueAvailability' in request.json  and 'venueOpen' in request.json and 'venueHrCost' in request.json and 'venueCategory' in request.json:
+   
+    if request.method == 'POST' :
+        print(request.json)
         with open('counter.txt','r') as f:
             venueId=f.read()
             print(venueId)
         with open('counter.txt','w') as f:
             f.write(str(int(venueId)+1))
-            
-        
+           
+        venueDescription=request.json['venueDescription']
+        venueAddress=request.json['venueAddress']
         venueOwner = request.json['venueOwner']
         venueName = request.json['venueName']
-        venueAddress= request.json['venueAddress']
         venueAvailability=request.json['venueAvailability']
         venueOpen=request.json['venueOpen']
         venueHrCost=request.json['venueHrCost']
         venueCategory=request.json['venueCategory']
         venueCity=request.json['venueCity']
         venueState=request.json['venueState']
-        venueState=request.json['venueDescription']
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute('INSERT INTO Venue VALUES (%s,%s, % s, %s, %s, %s,%s,%s, %s,%s,%s)', (venueId,venueOwner,venueName, venueAddress, venueAvailability,venueOpen,venueHrCost,venueCategory,venueCity,venueState, venueDescription,))
+        cursor.execute('INSERT INTO venue VALUES (%s,%s,%s, % s, %s, % s,%s,%s, %s,%s,%s)', (venueId,venueDescription,venueAddress,venueOwner,venueName,venueAvailability,venueOpen,venueHrCost,venueCategory,venueCity,venueState))
         mysql.connection.commit()
+        cursor.execute("Insert into booking values('','','')")
         cursor.execute('SELECT * FROM  Venue')
-        data= cursor.fetchall() 
+        data= cursor.fetchall()
         arr=[]
 
         return jsonify({
-        'body':list(data),
         'status':'OK'
         })
     elif request.method == 'POST':
@@ -391,31 +391,109 @@ def registervenue():
     return ""
 
 @app.route('/venuelist', methods =['GET', 'POST'])
-
 def venuelist():
-
     if request.method == 'GET':
-        print(request.method)
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute('SELECT * FROM  Venue')
-        data= cursor.fetchall() 
-    
+       
+        cursor.execute("select venue.venueId,venueDescription,venueAddress, venueOwner,venueName,venueAvailability,venueOpen,venueHrCost,venueCategory,venueCity,venueState, CONCAT('{',GROUP_CONCAT(CONCAT(venuedate,':',venueslots)),'}') as venueSlots from venue inner join booking on venue.venueId=booking.venueId GROUP By venueId")
+        data= cursor.fetchall()
+        print(data)
+        data_l=list(data)
+        for i in data_l:
+            i['venueSlots']=i['venueSlots'].replace('{2','{"2').replace(":",'":"').replace(",2",',"2').replace('-1,"','-1","').replace("-1}",'-1"}')
+            a=json.loads(i['venueSlots'])
+            i['venueSlots']=a
+        # print(data)
         return jsonify({
         'body':list(data),
         'status':'OK'
         })
-    
+   
     return jsonify({
         'body': {},
         'status':'FAIL'
         })
-    
-# /EnterUserName's code for useractivitylist inserting into db and returning back from db.
-        
 
-# @app.route("/")
-# def hello():
-#     return "Welcome to backend"
+
+@app.route('/venuebooking', methods =['GET', 'POST'])
+def booking():
+    if request.method == 'POST':
+        with open('activity_counter.txt','r') as f:
+            activityId=f.read()
+        with open('activity_counter.txt','w') as f:
+            f.write(str(int(activityId)+1))
+       
+        venueSlots=request.json['venueSlots']
+        activityName=request.json['activityName']
+        activityDescription=request.json['activityDescription']
+        activityCapacity=request.json['activityCapacity']
+        activityLocation=request.json['activityLocation']
+        activityCategory=request.json['activityCategory']
+        activityAgeRange=request.json['activityAgeRange']
+        activityCost=request.json['activityCost']
+        activityCostAmount=request.json['activityCostAmount']
+        activityOrganizer=request.json['activityOrganizer']
+        activityVenueId=request.json['activityVenueId']
+        activityDate=request.json['activityDate']
+        activityVenueCost=request.json['activityVenueCost']
+        activityBookingDate=request.json['activityBookingDate']
+        activityTime=request.json['activityTime']
+        activityRemainingCapacity=request.json['activityRemainingCapacity']        
+        venueId=request.json['venueId']
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('INSERT into activities Values(%s,%s,%s,%s,%s,%s,%s,%s,%s, % s, %s, % s,%s,%s, %s,%s)',(
+            activityId,activityName,activityDescription,activityCapacity,
+            activityRemainingCapacity,activityLocation,activityCategory,activityAgeRange,
+            activityCost,activityCostAmount,
+            activityOrganizer,activityVenueId,
+            activityDate,activityTime,activityVenueCost,
+            activityBookingDate))
+        mysql.connection.commit()
+
+        for i in venueSlots:
+            cursor.execute('select venuedate from booking where venuedate=%s',(i,))
+            isthere=cursor.fetchone()
+            if isthere:
+                venueslot=json.dumps(venueSlots[i])
+                cursor.execute('update booking set venueslots=%s where venuedate=%s',(venueslot,i))
+                mysql.connection.commit()
+            else:
+                venueslot=json.dumps(venueSlots[i])
+                cursor.execute('Insert into booking Values(%s,%s,%s)', (venueId,i,venueslot))
+                mysql.connection.commit()
+
+        cursor.execute('SELECT * FROM activities WHERE activityOrganizer = %s', (activityOrganizer, ))
+        username = cursor.fetchone()
+       
+        cursor.execute('SELECT * FROM booking WHERE venueId= %s', (venueId,))
+        venueid=cursor.fetchone()
+
+        if username and venueid:
+            cursor.execute('select * from accounts inner join activities  on accounts.userName=activities.activityOrganizer where activities.activityOrganizer=% s',(activityOrganizer,))
+            userdata=cursor.fetchone()
+            cursor.execute('select * from venue inner join booking on venue.venueId=booking.venueId where booking.venueId=% s',(venueId,))
+            data=cursor.fetchone()
+            v_email=data['venueOwner']
+            firstName=userdata['firstName']
+            lastName=userdata['lastName']
+            email=userdata['email']
+            venueName=data['venueName']
+            venueLocation=data['venueLocation']
+            venueCity=data['venueCity']
+            venueState=data['venueState']
+
+            msg=Message("Booking Confirmation", sender="eventabloom@gmail.com",recipients=[email])
+            msg.body=render_template("booking.txt",venueName=venueName,venueLocation=venueLocation,venueCity=venueCity,venueState=venueState)
+            mail.send(msg)
+
+            msg=Message("Booking Confirmation", sender="eventabloom@gmail.com",recipients=[v_email])
+            msg.body=render_template("venue_booked.txt",firstName=firstName,lastName=lastName,email=email)
+            mail.send(msg)
+           
+            return jsonify({"status": "OK"})
+    else:
+        return jsonify({"status":"FAIL"})
+    
 
 @app.route("/activity",methods=['POST'])
 def factivity():
@@ -461,7 +539,7 @@ def returnacts():
         "activityName":Activities.activityName,
         "activityDescription":Activities.activityDescription,
         "activityCapacity":Activities.activityCapacity,
-        "activityRemainingCapacity":Activities.activityReminingCapacity,
+        "activityRemainingCapacity":Activities.activityRemainingCapacity,
         "activityLocation":Activities.activityLocation,
         "activityCategory":Activities.activityCategory,
         "activityAgeRange":Activities.activityAgeRange,
@@ -621,9 +699,6 @@ def acts_registered():
     # return ""  
     return jsonify({'status':'OK',
                         'body':ans})
-
-    
-
 
     
 
