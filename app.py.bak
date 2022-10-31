@@ -559,6 +559,50 @@ def returnacts():
     else:
         return ({'status':'FAIL'})
 
+
+# @app.route("/ra",methods=['GET'])
+# def returnacts():
+ 
+#     # q=Activities.query.all()
+
+#     q=db.session.query(Activities, venue).filter(Activities.activityId == venue.venueId).all()
+
+#     print(q)
+
+#     if len(q):
+#         all_activities=[{ "activityId":Activities.activityId,
+#             "activityName":Activities.activityName,
+#             "activityDescription":Activities.activityDescription,
+#             "activityCapacity":Activities.activityCapacity,
+#             "activityRemainingCapacity":Activities.activityRemainingCapacity,
+#             "activityLocation":Activities.activityLocation,
+#             "activityCategory":Activities.activityCategory,
+#             "activityAgeRange":Activities.activityAgeRange,
+#             "activityCost":Activities.activityCost,
+#             "activityCostAmount":Activities.activityCostAmount,
+#             "activityOrganizer": Activities.activityOrganizer,
+#             "activityVenueId":Activities.activityVenueId,
+#             "activityDate":Activities.activityDate,
+#             "activityTime":Activities.activityTime,
+#             "activityVenueCost":Activities.activityVenueCost,
+#             "activityBookingDate":Activities.activityBookingDate,
+#             "venueDescription":venue.venueDescription,
+#             "venueAddress":venue.venueAddress,
+#             "venueOwner":venue.venueOwner,
+#             "venueName":venue.venueName,
+#             "venueOpen":venue.venueOpen,
+#             "venueHrCost":venue.venueHrCost,
+#             "venueCategory":venue.venueCategory,
+#             "venueCity":venue.venueCity,
+#             "venueState":venue.venueState
+#         } for (Activities,venue) in q]
+
+#     return jsonify({'status':'OK',
+#         'body':all_activities})
+
+#     else:
+#         return ({'status':'FAIL'})
+
 # api for user's list:
 @app.route("/users",methods=['POST'])
 def fusers():
@@ -656,7 +700,7 @@ def reg_for_act():
     # got=request.get_json()
     # print(got)
     # print(got['activityId'])
-    return " "
+    return jsonify({'status':'OK'})
 
 @app.route("/CancelActivity",methods=['POST'])
 def cancel_act():
