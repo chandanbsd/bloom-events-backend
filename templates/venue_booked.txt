@@ -1,0 +1,5 @@
+User has booked a venue
+Details of the user:
+firstName: {{firstName}}
+LastName: {{lastName}}
+Email:{{email}}

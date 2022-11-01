@@ -400,7 +400,7 @@ def venuelist():
         print(data)
         data_l=list(data)
         for i in data_l:
-            i['venueSlots']=i['venueSlots'].replace('{2','{"2').replace(":",'":"').replace(",2",',"2').replace('-1,"','-1","').replace("-1}",'-1"}')
+            i['venueSlots']=i['venueSlots'].replace('{2','{"2').replace(":",'":').replace(",2",',"2')
             a=json.loads(i['venueSlots'])
             i['venueSlots']=a
         # print(data)
@@ -416,13 +416,19 @@ def venuelist():
 
 
 @app.route('/venuebooking', methods =['GET', 'POST'])
+
 def booking():
+
     if request.method == 'POST':
+
         with open('activity_counter.txt','r') as f:
+
             activityId=f.read()
+
         with open('activity_counter.txt','w') as f:
+
             f.write(str(int(activityId)+1))
-       
+
         venueSlots=request.json['venueSlots']
         activityName=request.json['activityName']
         activityDescription=request.json['activityDescription']
@@ -438,18 +444,12 @@ def booking():
         activityVenueCost=request.json['activityVenueCost']
         activityBookingDate=request.json['activityBookingDate']
         activityTime=request.json['activityTime']
-        activityRemainingCapacity=request.json['activityRemainingCapacity']        
-        venueId=request.json['venueId']
+        activityRemainingCapacity=request.json['activityRemainingCapacity']      
+        venueId=request.json['activityVenueId']
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute('INSERT into activities Values(%s,%s,%s,%s,%s,%s,%s,%s,%s, % s, %s, % s,%s,%s, %s,%s)',(
-            activityId,activityName,activityDescription,activityCapacity,
-            activityRemainingCapacity,activityLocation,activityCategory,activityAgeRange,
-            activityCost,activityCostAmount,
-            activityOrganizer,activityVenueId,
-            activityDate,activityTime,activityVenueCost,
-            activityBookingDate))
+        cursor.execute('INSERT into activities Values(%s,%s,%s,%s,%s,%s,%s,%s,%s, %s, %s, % s,%s,%s, %s,%s)',(activityId,activityName,activityDescription,activityCapacity,activityLocation,activityCategory,activityRemainingCapacity,activityAgeRange,activityCost,activityCostAmount,activityOrganizer,activityVenueId,activityDate,activityTime,activityVenueCost,activityBookingDate))        
         mysql.connection.commit()
-
+        
         for i in venueSlots:
             cursor.execute('select venuedate from booking where venuedate=%s',(i,))
             isthere=cursor.fetchone()
@@ -464,36 +464,36 @@ def booking():
 
         cursor.execute('SELECT * FROM activities WHERE activityOrganizer = %s', (activityOrganizer, ))
         username = cursor.fetchone()
-       
         cursor.execute('SELECT * FROM booking WHERE venueId= %s', (venueId,))
         venueid=cursor.fetchone()
-
         if username and venueid:
             cursor.execute('select * from accounts inner join activities  on accounts.userName=activities.activityOrganizer where activities.activityOrganizer=% s',(activityOrganizer,))
             userdata=cursor.fetchone()
             cursor.execute('select * from venue inner join booking on venue.venueId=booking.venueId where booking.venueId=% s',(venueId,))
             data=cursor.fetchone()
-            v_email=data['venueOwner']
+            
+            v_name=data['venueOwner']
+            cursor.execute('select email from accounts inner join venue on accounts.userName=venue.venueOwner where venue.venueOwner=%s',(v_name,))
+            venue_email_dict=cursor.fetchone()
+
+            v_email=venue_email_dict['email']
             firstName=userdata['firstName']
             lastName=userdata['lastName']
             email=userdata['email']
             venueName=data['venueName']
-            venueLocation=data['venueLocation']
+            venueLocation=data['venueAddress']
             venueCity=data['venueCity']
             venueState=data['venueState']
-
             msg=Message("Booking Confirmation", sender="eventabloom@gmail.com",recipients=[email])
             msg.body=render_template("booking.txt",venueName=venueName,venueLocation=venueLocation,venueCity=venueCity,venueState=venueState)
             mail.send(msg)
-
-            msg=Message("Booking Confirmation", sender="eventabloom@gmail.com",recipients=[v_email])
+            msg=Message("Venue Booked Confirmation", sender="eventabloom@gmail.com",recipients=[v_email])
             msg.body=render_template("venue_booked.txt",firstName=firstName,lastName=lastName,email=email)
             mail.send(msg)
-           
+
             return jsonify({"status": "OK"})
     else:
         return jsonify({"status":"FAIL"})
-    
 
 @app.route("/activity",methods=['POST'])
 def factivity():
