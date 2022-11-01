@@ -18,13 +18,13 @@ from sqlalchemy import create_engine
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, ForeignKey, Integer, Table
 from sqlalchemy.orm import declarative_base, relationship
-
+import json
 
 
 Base = declarative_base()
 
 app = Flask(__name__)
-# CORS(app)
+CORS(app)
 # mail= Mail(app)
 app.secret_key = 'your secret key'
 app.config['MYSQL_HOST'] = 'localhost'
@@ -74,11 +74,19 @@ def login():
             session["userName"]=account["userName"]
             return jsonify({'status': 'OK',
             'body':{
-                'firstName':account['firstName'],
+                'userName':account['userName'],
+            'firstName':account['firstName'],
             'lastName':account['lastName'],
-            'userName':account['userName'],
+            'age':account['age'],
+            'gender':account['gender'],
+             'isAvailable':account['isAvailable'],
+            'bio':account['bio'],
+            'categoryType':account['categoryType'],
+            'categoryLevel':account['categoryLevel'],
+            'city':account['city'],
+            'state':account['state'],
             'email':account['email'],
-            'isOwner':account['isOwner']}})
+            }})
             # return render_template('index.html', msg = msg)
         else:
             return ({'status':'FAIL'})
@@ -347,34 +355,34 @@ def pass_reset():
 @app.route('/registervenue', methods =['GET', 'POST'])
 
 def registervenue():
-    
-    if request.method == 'POST' and 'venueOwner' in request.json and 'venueName' in request.json and 'venueAddress' in request.json and 'venueAvailability' in request.json  and 'venueOpen' in request.json and 'venueHrCost' in request.json and 'venueCategory' in request.json:
+   
+    if request.method == 'POST' :
+        print(request.json)
         with open('counter.txt','r') as f:
             venueId=f.read()
             print(venueId)
         with open('counter.txt','w') as f:
             f.write(str(int(venueId)+1))
-            
-        
+           
+        venueDescription=request.json['venueDescription']
+        venueAddress=request.json['venueAddress']
         venueOwner = request.json['venueOwner']
         venueName = request.json['venueName']
-        venueAddress= request.json['venueAddress']
         venueAvailability=request.json['venueAvailability']
         venueOpen=request.json['venueOpen']
         venueHrCost=request.json['venueHrCost']
         venueCategory=request.json['venueCategory']
         venueCity=request.json['venueCity']
         venueState=request.json['venueState']
-        venueState=request.json['venueDescription']
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute('INSERT INTO Venue VALUES (%s,%s, % s, %s, %s, %s,%s,%s, %s,%s,%s)', (venueId,venueOwner,venueName, venueAddress, venueAvailability,venueOpen,venueHrCost,venueCategory,venueCity,venueState, venueDescription,))
+        cursor.execute('INSERT INTO venue VALUES (%s,%s,%s, % s, %s, % s,%s,%s, %s,%s,%s)', (venueId,venueDescription,venueAddress,venueOwner,venueName,venueAvailability,venueOpen,venueHrCost,venueCategory,venueCity,venueState))
         mysql.connection.commit()
+        cursor.execute("Insert into booking values('','','')")
         cursor.execute('SELECT * FROM  Venue')
-        data= cursor.fetchall() 
+        data= cursor.fetchall()
         arr=[]
 
         return jsonify({
-        'body':list(data),
         'status':'OK'
         })
     elif request.method == 'POST':
@@ -383,31 +391,109 @@ def registervenue():
     return ""
 
 @app.route('/venuelist', methods =['GET', 'POST'])
-
 def venuelist():
-
     if request.method == 'GET':
-        print(request.method)
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute('SELECT * FROM  Venue')
-        data= cursor.fetchall() 
-    
+       
+        cursor.execute("select venue.venueId,venueDescription,venueAddress, venueOwner,venueName,venueAvailability,venueOpen,venueHrCost,venueCategory,venueCity,venueState, CONCAT('{',GROUP_CONCAT(CONCAT(venuedate,':',venueslots)),'}') as venueSlots from venue inner join booking on venue.venueId=booking.venueId GROUP By venueId")
+        data= cursor.fetchall()
+        print(data)
+        data_l=list(data)
+        for i in data_l:
+            i['venueSlots']=i['venueSlots'].replace('{2','{"2').replace(":",'":').replace(",2",',"2')
+            a=json.loads(i['venueSlots'])
+            i['venueSlots']=a
+        # print(data)
         return jsonify({
         'body':list(data),
         'status':'OK'
         })
-    
+   
     return jsonify({
         'body': {},
         'status':'FAIL'
         })
-    
-# /EnterUserName's code for useractivitylist inserting into db and returning back from db.
-        
 
-# @app.route("/")
-# def hello():
-#     return "Welcome to backend"
+
+@app.route('/venuebooking', methods =['GET', 'POST'])
+
+def booking():
+
+    if request.method == 'POST':
+
+        with open('activity_counter.txt','r') as f:
+
+            activityId=f.read()
+
+        with open('activity_counter.txt','w') as f:
+
+            f.write(str(int(activityId)+1))
+
+        venueSlots=request.json['venueSlots']
+        activityName=request.json['activityName']
+        activityDescription=request.json['activityDescription']
+        activityCapacity=request.json['activityCapacity']
+        activityLocation=request.json['activityLocation']
+        activityCategory=request.json['activityCategory']
+        activityAgeRange=request.json['activityAgeRange']
+        activityCost=request.json['activityCost']
+        activityCostAmount=request.json['activityCostAmount']
+        activityOrganizer=request.json['activityOrganizer']
+        activityVenueId=request.json['activityVenueId']
+        activityDate=request.json['activityDate']
+        activityVenueCost=request.json['activityVenueCost']
+        activityBookingDate=request.json['activityBookingDate']
+        activityTime=request.json['activityTime']
+        activityRemainingCapacity=request.json['activityRemainingCapacity']      
+        venueId=request.json['activityVenueId']
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('INSERT into activities Values(%s,%s,%s,%s,%s,%s,%s,%s,%s, %s, %s, % s,%s,%s, %s,%s)',(activityId,activityName,activityDescription,activityCapacity,activityLocation,activityCategory,activityRemainingCapacity,activityAgeRange,activityCost,activityCostAmount,activityOrganizer,activityVenueId,activityDate,activityTime,activityVenueCost,activityBookingDate))        
+        mysql.connection.commit()
+        
+        for i in venueSlots:
+            cursor.execute('select venuedate from booking where venuedate=%s',(i,))
+            isthere=cursor.fetchone()
+            if isthere:
+                venueslot=json.dumps(venueSlots[i])
+                cursor.execute('update booking set venueslots=%s where venuedate=%s',(venueslot,i))
+                mysql.connection.commit()
+            else:
+                venueslot=json.dumps(venueSlots[i])
+                cursor.execute('Insert into booking Values(%s,%s,%s)', (venueId,i,venueslot))
+                mysql.connection.commit()
+
+        cursor.execute('SELECT * FROM activities WHERE activityOrganizer = %s', (activityOrganizer, ))
+        username = cursor.fetchone()
+        cursor.execute('SELECT * FROM booking WHERE venueId= %s', (venueId,))
+        venueid=cursor.fetchone()
+        if username and venueid:
+            cursor.execute('select * from accounts inner join activities  on accounts.userName=activities.activityOrganizer where activities.activityOrganizer=% s',(activityOrganizer,))
+            userdata=cursor.fetchone()
+            cursor.execute('select * from venue inner join booking on venue.venueId=booking.venueId where booking.venueId=% s',(venueId,))
+            data=cursor.fetchone()
+            
+            v_name=data['venueOwner']
+            cursor.execute('select email from accounts inner join venue on accounts.userName=venue.venueOwner where venue.venueOwner=%s',(v_name,))
+            venue_email_dict=cursor.fetchone()
+
+            v_email=venue_email_dict['email']
+            firstName=userdata['firstName']
+            lastName=userdata['lastName']
+            email=userdata['email']
+            venueName=data['venueName']
+            venueLocation=data['venueAddress']
+            venueCity=data['venueCity']
+            venueState=data['venueState']
+            msg=Message("Booking Confirmation", sender="eventabloom@gmail.com",recipients=[email])
+            msg.body=render_template("booking.txt",venueName=venueName,venueLocation=venueLocation,venueCity=venueCity,venueState=venueState)
+            mail.send(msg)
+            msg=Message("Venue Booked Confirmation", sender="eventabloom@gmail.com",recipients=[v_email])
+            msg.body=render_template("venue_booked.txt",firstName=firstName,lastName=lastName,email=email)
+            mail.send(msg)
+
+            return jsonify({"status": "OK"})
+    else:
+        return jsonify({"status":"FAIL"})
 
 @app.route("/activity",methods=['POST'])
 def factivity():
@@ -445,15 +531,19 @@ def factivity():
 
 @app.route("/ra",methods=['GET'])
 def returnacts():
-    
-    q=Activities.query.all()
-    
+ 
+    # q=Activities.query.all()
+ 
+    q=db.session.query(Activities, venue).filter(Activities.activityVenueId == venue.venueId).all()
+ 
+
+ 
     if len(q):
         all_activities=[{ "activityId":Activities.activityId,
         "activityName":Activities.activityName,
         "activityDescription":Activities.activityDescription,
         "activityCapacity":Activities.activityCapacity,
-        "activityRemainingCapacity":Activities.activityReminingCapacity,
+        "activityRemainingCapacity":Activities.activityRemainingCapacity,
         "activityLocation":Activities.activityLocation,
         "activityCategory":Activities.activityCategory,
         "activityAgeRange":Activities.activityAgeRange,
@@ -464,14 +554,70 @@ def returnacts():
         "activityDate":Activities.activityDate,
         "activityTime":Activities.activityTime,
         "activityVenueCost":Activities.activityVenueCost,
-        "activityBookingDate":Activities.activityBookingDate
-        } for Activities in q]
+        "activityBookingDate":Activities.activityBookingDate,
+        "venueDescription":venue.venueDescription,
+        "venueAddress":venue.venueAddress,
+        "venueOwner":venue.venueOwner,
+        "venueName":venue.venueName,
+        "venueOpen":venue.venueOpen,
+        "venueHrCost":venue.venueHrCost,
+        "venueCategory":venue.venueCategory,
+        "venueCity":venue.venueCity,
+        "venueState":venue.venueState
         
-        return jsonify({'status':'OK',
-                        'body':all_activities})
+        } for (Activities,venue) in q]
 
+        print(all_activities)
+ 
+        return jsonify({'status':'OK',
+            'body':all_activities})
+ 
     else:
         return ({'status':'FAIL'})
+
+
+# @app.route("/ra",methods=['GET'])
+# def returnacts():
+ 
+#     # q=Activities.query.all()
+
+#     q=db.session.query(Activities, venue).filter(Activities.activityId == venue.venueId).all()
+
+#     print(q)
+
+#     if len(q):
+#         all_activities=[{ "activityId":Activities.activityId,
+#             "activityName":Activities.activityName,
+#             "activityDescription":Activities.activityDescription,
+#             "activityCapacity":Activities.activityCapacity,
+#             "activityRemainingCapacity":Activities.activityRemainingCapacity,
+#             "activityLocation":Activities.activityLocation,
+#             "activityCategory":Activities.activityCategory,
+#             "activityAgeRange":Activities.activityAgeRange,
+#             "activityCost":Activities.activityCost,
+#             "activityCostAmount":Activities.activityCostAmount,
+#             "activityOrganizer": Activities.activityOrganizer,
+#             "activityVenueId":Activities.activityVenueId,
+#             "activityDate":Activities.activityDate,
+#             "activityTime":Activities.activityTime,
+#             "activityVenueCost":Activities.activityVenueCost,
+#             "activityBookingDate":Activities.activityBookingDate,
+#             "venueDescription":venue.venueDescription,
+#             "venueAddress":venue.venueAddress,
+#             "venueOwner":venue.venueOwner,
+#             "venueName":venue.venueName,
+#             "venueOpen":venue.venueOpen,
+#             "venueHrCost":venue.venueHrCost,
+#             "venueCategory":venue.venueCategory,
+#             "venueCity":venue.venueCity,
+#             "venueState":venue.venueState
+#         } for (Activities,venue) in q]
+
+#     return jsonify({'status':'OK',
+#         'body':all_activities})
+
+#     else:
+#         return ({'status':'FAIL'})
 
 # api for user's list:
 @app.route("/users",methods=['POST'])
@@ -526,6 +672,7 @@ def returnusers():
                         "categoryLevel":Accounts.categoryLevel,
                         "city":Accounts.city,
                         "state":Accounts.state,
+                        "email":Accounts.state,
                        } for Accounts in q]
         
         return jsonify({'status':'OK',
@@ -569,7 +716,7 @@ def reg_for_act():
     # got=request.get_json()
     # print(got)
     # print(got['activityId'])
-    return " "
+    return jsonify({'status':'OK'})
 
 @app.route("/CancelActivity",methods=['POST'])
 def cancel_act():
@@ -595,7 +742,7 @@ def cancel_act():
         db.session.commit()
 
     
-    return " "
+    return jsonify({'status':'OK'})
 
 @app.route("/Registered_acts",methods=['POST'])
 def acts_registered():
@@ -613,33 +760,127 @@ def acts_registered():
     return jsonify({'status':'OK',
                         'body':ans})
 
-    
 
+@app.route("/insertreview",methods=['POST'])
+def insert_review():
+    gotreview=request.get_json()
+    # print(gotreview)
+
+    numratings_beforeinsertion=len(activityRating.query.all())
+    # print(numratings_beforeinsertion)
+
+    reviewobj=activityRating(
+    activityId = gotreview['activityId'],
+    userName=gotreview['userName'],
+    rating=gotreview['rating'],
+    review=gotreview['review']
+    )
+
+    db.session.add(reviewobj)
+    db.session.commit()
+
+    numratings_afterinsertion=len(activityRating.query.all())
+    # print(numratings_afterinsertion)
+
+    if numratings_afterinsertion-numratings_beforeinsertion==1:
+    #this means record inserted successfully
+        return ({'status':'OK'})
+    else:
+        return ({'status':'Fail'})
+    
+@app.route("/returnreview",methods=['GET'])
+def return_review():
 
     
+    r=activityRating.query.all()
+    
+    if len(r):
+        all_reviews=[{ "reviewId":activityRating.reviewId,
+        "activityId":activityRating.activityId,
+        "userName":activityRating.userName,
+        "rating":activityRating.rating,
+        "review":activityRating.review
+        
+        } for activityRating in r]
+        print(all_reviews)
+        return jsonify({'status':'OK',
+            'body':all_reviews})
+    
+    else:
+        return ({'status':'FAIL'})
+
+@app.route("/insertreview_venue",methods=['POST'])
+def insert_review_venue():
+    gotreview=request.get_json()
+    # print(gotreview)
+    
+    numratings_beforeinsertion=len(venueRating.query.all())
+    print(numratings_beforeinsertion)
+    
+    reviewobj=venueRating(
+        venueId = gotreview['venueId'],
+        userName=gotreview['userName'],
+        rating=gotreview['rating'],
+        review=gotreview['review']
+        )
+    
+    db.session.add(reviewobj)
+    db.session.commit()
+    
+    numratings_afterinsertion=len(venueRating.query.all())
+    print(numratings_afterinsertion)
+    
+    if numratings_afterinsertion-numratings_beforeinsertion==1:
+    #this means record inserted successfully
+        return ({'status':'OK'})
+    else:
+        return ({'status':'Fail'})
+ 
+ 
+@app.route("/returnreview_venue",methods=['GET'])
+def return_review_venue():
+    gotreview=request.get_json()
+    print(gotreview)
+    
+    r=venueRating.query.all()
+    
+    if len(r):
+        all_reviews=[{ "reviewId":venueRating.reviewId,
+        "venueId":venueRating.venueId,
+        "userName":venueRating.userName,
+        "rating":venueRating.rating,
+        "review":venueRating.review
+        
+        } for venueRating in r]
+        
+        return jsonify({'status':'OK',
+        'body':all_reviews})
+    
+    else:
+        return ({'status':'FAIL'})
 
 class Activities(db.Model):
-        __tablename__ = "activities"
-        activityId=db.Column(db.Integer,primary_key=True,nullable=False)
-        activityName=db.Column(db.Text(25),nullable=False)
-        activityDescription=db.Column(db.Text(25),nullable=False)
-        activityCapacity=db.Column(db.Integer,nullable=False)
-        activityRemainingCapacity=db.Column(db.Integer,nullable=False)
-        activityLocation=db.Column(db.Text(25),nullable=False)
-        activityCategory = db.Column(db.Text(25))
-        activityAgeRange=db.Column(db.Text(25))
-        activityCost=db.Column(db.Text(25))
-        activityCostAmount=db.Column(db.Integer,nullable=False)
-        activityOrganizer = db.Column(db.String(50),nullable=False)
-        activityVenueId=db.Column(db.Integer,nullable=False)
-        #activityVenueName= db.Column(db.String(100),nullable=False)
-        #activityVenueAddress=db.Column(db.String(10),nullable=False)
-        activityDate=db.Column(db.Text(20))
-        activityTime=db.Column(db.JSON)# Datatype array not supported in MySql.
-        #activityCity=db.Column(db.Text(25))
-        #activityState=db.Column(db.Text(25))
-        activityVenueCost=db.Column(db.Integer,nullable=False)
-        activityBookingDate=db.Column(db.Text(100))
+    __tablename__ = "activities"
+    activityId=db.Column(db.Integer,primary_key=True,nullable=False)
+    activityName=db.Column(db.Text(25),nullable=False)
+    activityDescription=db.Column(db.Text(25),nullable=False)
+    activityCapacity=db.Column(db.Integer,nullable=False)
+    activityRemainingCapacity=db.Column(db.Integer,nullable=False)
+    activityLocation=db.Column(db.Text(25),nullable=False)
+    activityCategory = db.Column(db.Text(25))
+    activityAgeRange=db.Column(db.Text(25))
+    activityCost=db.Column(db.Text(25))
+    activityCostAmount=db.Column(db.Integer,nullable=False)
+    activityOrganizer = db.Column(db.String(50),nullable=False)
+    activityVenueId=db.Column(db.Integer,nullable=False)
+    #activityVenueName= db.Column(db.String(100),nullable=False)
+    #activityVenueAddress=db.Column(db.String(10),nullable=False)
+    activityDate=db.Column(db.Text(20))
+    activityTime=db.Column(db.JSON)# Datatype array not supported in MySql.
+    #activityCity=db.Column(db.Text(25))
+    #activityState=db.Column(db.Text(25))
+    activityVenueCost=db.Column(db.Integer,nullable=False)
+    activityBookingDate=db.Column(db.Text(100))
         
         
         
@@ -671,14 +912,43 @@ class regact(db.Model):
         account=relationship("Accounts")
 
 
+class venue(db.Model):
+    __tablename__="venue"
+    venueId=db.Column(db.Integer,primary_key=True,nullable=False)
+    venueDescription=db.Column(db.String(50),primary_key=True,nullable=False)
+    venueAddress=db.Column(db.String(50),nullable=False)
+    venueOwner=db.Column(db.String(50),nullable=False)
+    venueName=db.Column(db.String(50),nullable=False)
+    # venueAvailability = db.Column(db.String(100),nullable=False)
+    venueAvailability=db.Column(db.String(50),nullable=False)
+    venueOpen=db.Column(db.String(10),nullable=False)
+    venueHrCost=db.Column(db.Integer,nullable=False)
+    venueCategory=db.Column(db.String(10),nullable=False)
+    # catoryType=db.Column(db.String(50),nullable=False)
+    venueCity=db.Column(db.String(50),nullable=False)
+    venueState=db.Column(db.String(50),nullable=False)
 
 
 
+class activityRating(db.Model):
+    __tablename__="activityRating"
+    reviewId=db.Column(db.Integer,primary_key=True)
+    activityId=db.Column(db.Integer,ForeignKey ("activities.activityId"))
+    userName=db.Column(db.Text,ForeignKey ("accounts.userName"))
+    rating=db.Column(db.Integer)
+    review=db.Column(db.Text)
+    activity=relationship("Activities")
+    account=relationship("Accounts")
 
 
 
-
-
-    
-
+class venueRating(db.Model):
+    __tablename__="venueRating"
+    reviewId=db.Column(db.Integer,primary_key=True)
+    venueId=db.Column(db.Integer,ForeignKey ("venue.venueId"))
+    userName=db.Column(db.Text,ForeignKey ("accounts.userName"))
+    rating=db.Column(db.Integer)
+    review=db.Column(db.Text)
+    venue=relationship("venue")
+    account=relationship("Accounts")
 

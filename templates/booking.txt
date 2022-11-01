@@ -1,0 +1,6 @@
+Your Booking has been confirmed
+Following are the Details:
+venueName: {{venueName}}
+venueLocation: {{venueLocation}}
+venueCity:{{venueCity}}
+venueState: {{venueState}}
