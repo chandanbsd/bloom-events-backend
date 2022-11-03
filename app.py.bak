@@ -720,29 +720,88 @@ def reg_for_act():
 
 @app.route("/CancelActivity",methods=['POST'])
 def cancel_act():
-    
-    got=request.get_json()
-    print(got)
-
-    
-
-    # db.session.query(Activities).filter(Activities.activityId==
-    # got['activityId']).update({Activities.activityRemainingCapacity:Activities.activityRemainingCapacity+1})
-    # db.session.commit()
-    activity=db.session.query(Activities).filter(Activities.activityId==got["activityId"]).first()
-    activity.activityRemainingCapacity += 1
-    db.session.commit()
-    d = db.session.query(regact).filter(regact.userName==got['userName'],
-                                        regact.activityId==got['activityId']).all()
-    print(d)
-
-    for record in d:
-        print(record)
-        db.session.delete(record)
-        db.session.commit()
-
-    
-    return jsonify({'status':'OK'})
+ 
+ got=request.get_json()
+ print(got)
+ 
+ # db.session.query(Activities).filter(Activities.activityId==
+ # got['activityId']).update({Activities.activityRemainingCapacity:Activities.activityRemainingCapacity+1})
+ # db.session.commit()
+ activity=db.session.query(Activities).filter(Activities.activityId==got["activityId"]).first()
+ activity.activityRemainingCapacity += 1
+ organizer=activity.activityOrganizer
+ accountsjoin=db.session.query(Accounts).filter(Accounts.userName==organizer).first()
+ organizeremail=accountsjoin.email
+ print(organizeremail)
+ 
+ useremail=db.session.query(Accounts).filter(Accounts.userName==got['userName']).first().email
+ print(useremail)
+ venuejoin=db.session.query(venue).filter(activity.activityVenueId==venue.venueId).first()
+ print(venuejoin)
+ db.session.commit()
+ d = db.session.query(regact).filter(regact.userName==got['userName'],
+ regact.activityId==got['activityId']).all()
+ print(d)
+ 
+ for record in d:
+    print(record)
+ db.session.delete(record)
+ db.session.commit()
+ msg=Message("activity Cancellation complete", sender="eventabloom@gmail.com",recipients=[useremail])
+ time=[
+ "1 A.M.",
+ "2 A.M.",
+ "3 A.M.",
+ "4 A.M.",
+ "5 A.M.",
+ "6 A.M.",
+ "7 A.M.",
+ "8 A.M.",
+ "9 A.M.",
+ "10 A.M.",
+ "11 A.M.",
+ "12 P.M.",
+ "1 P.M.",
+ "2 P.M.",
+ "3 P.M.",
+ "4 P.M.",
+ "5 P.M.",
+ "6 P.M.",
+ "7 P.M.",
+ "8 P.M.",
+ "9 P.M.",
+ "10 P.M.",
+ "11 P.M.",
+ "12 P.M.",
+]
+ d1="ActivityName:" + activity.activityName +"\n"
+ d2="ActivityDescription:" + activity.activityDescription + "\n"
+ d3="ActivityLocation:" + activity.activityLocation +"\n"
+ d4="ActivityCategory:" + activity.activityCategory + "\n"
+ d5="ActivityCostAmount:" + str(activity.activityCostAmount) + "\n"
+ d6="ActivityTime:" + time[activity.activityTime[0]] + "-" + time[activity.activityTime[-1]] +"\n"
+ d6="VenueName:" + venuejoin.venueName +"\n"
+ d7="VenueAddress:" + venuejoin.venueAddress +"\n"
+ d8="OrganizerEmail:" + organizeremail + "\n"
+ d9="ActivityBookingDate" + activity.activityBookingDate + "\n"
+# d1="ActivityName:" + activityjoin.activityName +"\n"
+# d2="ActivityDescription:" + activityjoin.Description + "\n"
+ msg.body=d1+d2+d3+d4+d5+d6+d7+d8+d9
+ mail.send(msg)
+ #Mail to organizer
+ msg2=Message("activity cancellation complete", sender="eventabloom@gmail.com",recipients=[organizeremail])
+ d1="ActivityName:" + activity.activityName +"\n"
+ d2="ActivityTime:" + time[activity.activityTime[0]] + "-" + time[activity.activityTime[-1]] +"\n"
+ d3="VenueName:" + venuejoin.venueName +"\n"
+ d4="VenueAddress:" + venuejoin.venueAddress +"\n"
+ d5="ParticipantName:" + got['userName'] + "\n"
+ d6="ParticipantEmail:" + useremail + "\n"
+ d7="ActivityBookingDate" + activity.activityBookingDate + "\n"
+# d1="ActivityName:" + activityjoin.activityName +"\n"
+# d2="ActivityDescription:" + activityjoin.Description + "\n"
+ msg2.body=d1+d2+d3+d4+d5+d6+d7
+ mail.send(msg2)
+ return jsonify({'status':'OK'})
 
 @app.route("/Registered_acts",methods=['POST'])
 def acts_registered():
@@ -858,6 +917,35 @@ def return_review_venue():
     
     else:
         return ({'status':'FAIL'})
+
+
+@app.route("/activityPayment",methods=['POST'])
+def activityPayment():
+    gotpayment=request.get_json()
+    print(gotpayment)
+    
+    paymentobj=activityPayment(
+    activityId=gotpayment['activityId'],
+    participantuserName=gotpayment['participantuserName'],
+    organizeruserName=gotpayment['organizeruserName'],
+    amount=gotpayment['amount']
+    )
+    
+    db.session.add(paymentobj)
+    db.session.commit()
+    
+    return({'status':'OK'})
+
+
+    
+
+class activityPayment(db.Model):
+    __tablename__="activityPayment"
+    paymentId=db.Column(db.Integer,primary_key=True,nullable=False)
+    activityId=db.Column(db.String(50),nullable=False)
+    participantuserName=db.Column(db.String(50),nullable=False)
+    organizeruserName=db.Column(db.String(50),nullable=False)
+    amount=db.Column(db.Integer)
 
 class Activities(db.Model):
     __tablename__ = "activities"
