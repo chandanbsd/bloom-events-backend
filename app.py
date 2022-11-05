@@ -27,11 +27,11 @@ app = Flask(__name__)
 CORS(app)
 # mail= Mail(app)
 app.secret_key = 'your secret key'
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'root'
+app.config['MYSQL_HOST'] = 'bloomevents.mysql.database.azure.com'
+app.config['MYSQL_USER'] = 'EnterUserName'
+app.config['MYSQL_PASSWORD'] = '#Password'
 app.config['MYSQL_DB'] = 'bloomdb'
-db_uri=app.config['SQLALCHEMY_DATABASE_URI'] ='mysql://root:root@localhost:3306/bloomdb' 
+db_uri=app.config['SQLALCHEMY_DATABASE_URI'] ='mysql://EnterUserName:#Password@bloomevents.mysql.database.azure.com:3306/bloomdb' 
 # “dialect+driver://username:password@host:port/database”
 app.config['SQLALCHEMY_TR\\ACK_MODIFICATIONS'] = False
 
