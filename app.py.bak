@@ -953,33 +953,51 @@ def activityPayment():
 def participant_Details():
     got=request.get_json()
     print(got)
-
     p=db.session.query(regact,Accounts).filter(regact.activityId==got["activityId"]).filter(regact.userName==Accounts.userName)
-    
-    print(p)
-    
     userNameArray=[]
     emailsArray=[]
     for item in p:
         userNameArray.append(item[0].userName)
         emailsArray.append(item[1].email)
         
-    print(userNameArray)
-    print(emailsArray)
 
     userdetails={ "userNameList":userNameArray,
                   "emailList":emailsArray}
 
     return jsonify({'status':'OK',
                         'body':userdetails})
-
     
 
 
+@app.route('/getbookmark', methods =['GET', 'POST'])
+def getbookmark():
+    if request.method=="POST":
+        userName=request.json['userName']
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('select * from bookmark where userName=% s', ( userName, ))
+        account = cursor.fetchone()
+        print(account)
+        account['favActivity']=account['favActivity'].strip('][').split(',')
+        account['favVenue']=account['favVenue'].strip('][').split(',')
+        favVenue=[]
+        favActivity=[]
+        for i in account['favVenue']:
+            favVenue.append(int(i))
 
+        for i in account['favActivity']:
+            favActivity.append(int(i))
+        print(favVenue)
+        print(favActivity)
 
-    
-
+        return jsonify({'status': 'OK',
+            'body':{
+                'userName':account['userName'],
+                'favActivity':favActivity,
+                'favVenue':favVenue
+            }})
+    else:
+        return ({'status':'FAIL'})
+        
 class activityPayment(db.Model):
     __tablename__="activityPayment"
     paymentId=db.Column(db.Integer,primary_key=True,nullable=False)
