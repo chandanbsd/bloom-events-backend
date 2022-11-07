@@ -953,19 +953,13 @@ def activityPayment():
 def participant_Details():
     got=request.get_json()
     print(got)
-
     p=db.session.query(regact,Accounts).filter(regact.activityId==got["activityId"]).filter(regact.userName==Accounts.userName)
-    
-    print(p)
-    
     userNameArray=[]
     emailsArray=[]
     for item in p:
         userNameArray.append(item[0].userName)
         emailsArray.append(item[1].email)
         
-    print(userNameArray)
-    print(emailsArray)
 
     userdetails={ "userNameList":userNameArray,
                   "emailList":emailsArray}
@@ -973,8 +967,13 @@ def participant_Details():
     return jsonify({'status':'OK',
                         'body':userdetails})
 
+    
 
-@app.route("/delete_activity_organizer",methods=['POST'])
+
+
+
+    
+app.route("/delete_activity_organizer",methods=['POST'])
 def delete_activity_by_organizer():
     got=request.get_json()
     
@@ -984,23 +983,13 @@ def delete_activity_by_organizer():
     for item in d_regact:
         db.session.delete(item)
         db.session.commit()
-
     #deleltion from the rating table
     d_activityRating=db.session.query(activityRating).filter(activityRating.activityId==got['activityId']).all()
     for item in d_activityRating:
         db.session.delete(item)
         db.session.commit()
-
-    #deletion from the payment table
-    d_activityPayment=db.session.query(activityPayment).filter(activityPayment.activityId==got['activityId']).all()
-    for item in d_activityPayment:
-        db.session.delete(item)
-        db.session.commit()
-    
-    #updation in the venue table and then delete from the activities table
-    d_activities=db.session.query(Activities).filter(Activities.activityId==got['activityId']).all()
-    
-    print(d_activities)
+        d_activities=db.session.query(Activities).filter(Activities.activityId==got['activityId']).all()
+        print(d_activities)
     for act_item in d_activities:
         print(act_item.activityId)
         act_date=act_item.activityDate
@@ -1009,7 +998,6 @@ def delete_activity_by_organizer():
         print(act_time)
         d_bookings=db.session.query(booking).filter(booking.venueId==act_item.activityVenueId,booking.venuedate==act_date).all()
         print(d_bookings)
-
         for book_item in d_bookings:
             print(book_item.venueslots)
             splitted_slots=book_item.venueslots.split(',')
@@ -1039,6 +1027,35 @@ def delete_activity_by_organizer():
     return jsonify({'status':'OK',
                         'body':'activitydeleted'})
 
+@app.route('/getbookmark', methods =['GET', 'POST'])
+def getbookmark():
+    if request.method=="POST":
+        userName=request.json['userName']
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('select * from bookmark where userName=% s', ( userName, ))
+        account = cursor.fetchone()
+        print(account)
+        account['favActivity']=account['favActivity'].strip('][').split(',')
+        account['favVenue']=account['favVenue'].strip('][').split(',')
+        favVenue=[]
+        favActivity=[]
+        for i in account['favVenue']:
+            favVenue.append(int(i))
+
+        for i in account['favActivity']:
+            favActivity.append(int(i))
+        print(favVenue)
+        print(favActivity)
+
+        return jsonify({'status': 'OK',
+            'body':{
+                'userName':account['userName'],
+                'favActivity':favActivity,
+                'favVenue':favVenue
+            }})
+    else:
+        return ({'status':'FAIL'})
+        
 
 class activityPayment(db.Model):
     __tablename__="activityPayment"
