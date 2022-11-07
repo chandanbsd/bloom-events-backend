@@ -27,11 +27,11 @@ app = Flask(__name__)
 CORS(app)
 # mail= Mail(app)
 app.secret_key = 'your secret key'
-app.config['MYSQL_HOST'] = 'EnterDetailsHere'
-app.config['MYSQL_USER'] = 'EnterUserName'
-app.config['MYSQL_PASSWORD'] = '#Password'
+app.config['MYSQL_HOST'] = 'localhost'
+app.config['MYSQL_USER'] = 'root'
+app.config['MYSQL_PASSWORD'] = 'root'
 app.config['MYSQL_DB'] = 'bloomdb'
-db_uri=app.config['SQLALCHEMY_DATABASE_URI'] ='mysql://EnterUserName:#Password@EnterDetailsHere:3306/bloomdb' 
+db_uri=app.config['SQLALCHEMY_DATABASE_URI'] ='mysql://root:root@localhost:3306/bloomdb' 
 # “dialect+driver://username:password@host:port/database”
 app.config['SQLALCHEMY_TR\\ACK_MODIFICATIONS'] = False
 
@@ -935,6 +935,34 @@ def activityPayment():
     db.session.commit()
     
     return({'status':'OK'})
+
+@app.route("/return_participant_Details",methods=['POST'])
+def participant_Details():
+    got=request.get_json()
+    print(got)
+
+    p=db.session.query(regact,Accounts).filter(regact.activityId==got["activityId"]).filter(regact.userName==Accounts.userName)
+    
+    print(p)
+    
+    userNameArray=[]
+    emailsArray=[]
+    for item in p:
+        userNameArray.append(item[0].userName)
+        emailsArray.append(item[1].email)
+        
+    print(userNameArray)
+    print(emailsArray)
+
+    userdetails={ "userNames":userNameArray,
+                  "emailids":emailsArray}
+
+    return jsonify({'status':'OK',
+                        'body':userdetails})
+
+    
+
+
 
 
     
