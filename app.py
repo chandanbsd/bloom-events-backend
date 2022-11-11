@@ -1004,16 +1004,24 @@ def delete_activity_by_organizer():
 
             for value in act_time:
                 print(value)
-                splitted_slots[value]="open/-1..."
+                splitted_slots[value]="open/-1"
                 print(splitted_slots)
                 
+            length=len(splitted_slots)
+            list_to_string=''.join([str(elem)+',' for elem in splitted_slots[0:length-1]])
 
-            list_to_string=''.join([str(elem)+',' for elem in splitted_slots])
+            
+            list_to_string = list_to_string + ''.join(str(splitted_slots[-1]))
             print(list_to_string)
 
             book_item.venueslots=list_to_string
 
             db.session.commit()
+
+            #delete the activity also
+            db.session.delete(act_item)
+            db.session.commit()
+
 
     return jsonify({'status':'OK',
                         'body':'activitydeleted'})
