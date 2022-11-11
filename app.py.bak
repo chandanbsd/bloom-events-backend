@@ -966,7 +966,65 @@ def participant_Details():
 
     return jsonify({'status':'OK',
                         'body':userdetails})
+
+
+@app.route("/delete_activity_organizer",methods=['POST'])
+def delete_activity_by_organizer():
+    got=request.get_json()
     
+    #deletion from the regact table
+    d_regact=db.session.query(regact).filter(regact.activityId==got['activityId']).all()
+    #print(d_regact)
+    for item in d_regact:
+        db.session.delete(item)
+        db.session.commit()
+
+    #deleltion from the rating table
+    d_activityRating=db.session.query(activityRating).filter(activityRating.activityId==got['activityId']).all()
+    for item in d_activityRating:
+        db.session.delete(item)
+        db.session.commit()
+
+    #deletion from the payment table
+    d_activityPayment=db.session.query(activityPayment).filter(activityPayment.activityId==got['activityId']).all()
+    for item in d_activityPayment:
+        db.session.delete(item)
+        db.session.commit()
+    
+    #updation in the venue table and then delete from the activities table
+    d_activities=db.session.query(Activities).filter(Activities.activityId==got['activityId']).all()
+    
+    print(d_activities)
+    for act_item in d_activities:
+        print(act_item.activityId)
+        act_date=act_item.activityDate
+        act_time=act_item.activityTime
+        print(act_date)
+        print(act_time)
+        d_bookings=db.session.query(booking).filter(booking.venueId==act_item.activityVenueId,booking.venuedate==act_date).all()
+        print(d_bookings)
+
+        for book_item in d_bookings:
+            print(book_item.venueslots)
+            splitted_slots=book_item.venueslots.split(',')
+            print(splitted_slots)
+
+            for value in act_time:
+                print(value)
+                splitted_slots[value]="open/-1..."
+                print(splitted_slots)
+                
+
+            list_to_string=''.join([str(elem)+',' for elem in splitted_slots])
+            print(list_to_string)
+
+            book_item.venueslots=list_to_string
+
+            db.session.commit()
+
+    return jsonify({'status':'OK',
+                        'body':'activitydeleted'})
+
 
 
 @app.route('/getbookmark', methods =['GET', 'POST'])
@@ -1100,4 +1158,18 @@ class venueRating(db.Model):
     review=db.Column(db.Text)
     venue=relationship("venue")
     account=relationship("Accounts")
+
+
+
+class booking(db.Model):
+    __tablename__="booking"
+    venueId=db.Column(db.Integer,ForeignKey("activities.activityVenueId"))
+    venuedate=db.Column(db.String(255),ForeignKey ("venue.venueId"))
+    venueslots=db.Column(db.String(255))
+    __mapper_args__ = {
+        "primary_key": [venueId, venuedate]
+    }
+    
+
+
 
