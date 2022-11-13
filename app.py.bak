@@ -19,6 +19,17 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, ForeignKey, Integer, Table
 from sqlalchemy.orm import declarative_base, relationship
 import json
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Index, LargeBinary,BigInteger, String, Float, Text, Boolean
+from sqlalchemy import create_engine
+from sqlalchemy.engine.url import URL
+
+
+
+import os
+from flask import Flask, flash, request, redirect, url_for
+from werkzeug.utils import secure_filename
+import base64
 
 
 Base = declarative_base()
@@ -49,6 +60,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 
 db=SQLAlchemy(app)
+app.secret_key = 'super secret key'
 
 
 
@@ -1143,8 +1155,6 @@ class venueRating(db.Model):
     venue=relationship("venue")
     account=relationship("Accounts")
 
-
-
 class booking(db.Model):
     __tablename__="booking"
     venueId=db.Column(db.Integer,ForeignKey("activities.activityVenueId"))
@@ -1153,6 +1163,83 @@ class booking(db.Model):
     __mapper_args__ = {
         "primary_key": [venueId, venuedate]
     }
+
+
+class storeimages(db.Model):
+    __tablename__="storeimages"
+    picid=db.Column(db.Integer,primary_key=True)
+    pic=db.Column(db.LargeBinary)
+
+UPLOAD_FOLDER = '/Users/mohitdalvi/Desktop/IUB/Software_Engg/bloomevents_files'
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+
+# app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route("/store_image",methods=['GET','POST'])
+def upload_file():
+    if request.method == 'POST':
+        # check if the post request has the file part
+        if 'file' not in request.files:
+            flash('No file part')
+            return redirect(request.url)
+        file = request.files['file']
+        print(file)
+        # If the user does not select a file, the browser submits an
+        # empty file without a filename.
+        if file.filename == '':
+            flash('No selected file')
+            return redirect(request.url)
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            # file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            # return redirect(url_for('upload_file', name=filename))
+            print(app.config['UPLOAD_FOLDER'])
+
+            # with open(app.config['UPLOAD_FOLDER']+"/"+filename, "rb") as img_file:
+            my_string = base64.b64encode(file.read())
+            print(my_string)
+
+            image_obj=storeimages(
+                pic=my_string
+            )
+
+            db.session.add(image_obj)
+            db.session.commit()
+
+    return "imagestoredsuccessfully"
+
+from flask import send_file
+
+@app.route("/return_image",methods=['GET'])
+def return_image():
+    image_stored=storeimages.query.filter(storeimages.picid==9).all()
+    print(image_stored)
+
+    for item in image_stored:
+        print(type((item.pic).decode()))
+    # print(base64.b64decode(storeimages.pic))
+    print(type(base64.b64decode(item.pic)))
+
+    # retrieved_img=[{ 
+    # "returned_img":base64.b64decode(storeimages.pic)
+    # } for storeimages in image_stored]
+        
+    # return jsonify({'status':'OK',
+    #                 'body':retrieved_img})
+    return send_file(base64.b64decode(item.pic),mimetype='image/gif')
+    
+    
+    
+    
+
+
+
+
     
 
 
