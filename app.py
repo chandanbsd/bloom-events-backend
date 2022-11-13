@@ -691,10 +691,21 @@ def reg_for_act():
         activityId = got['activityId'],
         userName=got['userName']
         )
+    
+    #query regact to check if entry already there.
+    queryregact = db.session.query(regact).all()
+    print(queryregact)
 
+    for tuple in queryregact:
+        if (tuple.activityId==got['activityId'] and tuple.userName==got['userName']):
+            print("participant has already registered")
+        return jsonify({'status':'FAIL'})
+    
     db.session.add(regactobj)
     db.session.commit()
     print(regactobj)
+
+
 
     #Decrementing activity capacity.
     regactobj.activity.activityRemainingCapacity -=1
@@ -703,6 +714,8 @@ def reg_for_act():
     activityjoin=db.session.query(Activities).filter(Activities.activityId==got['activityId']).first()
     organizer=activityjoin.activityOrganizer
     accountsjoin=db.session.query(Accounts).filter(Accounts.userName==organizer).first()
+    print(Accounts.userName)
+    print(organizer)
     organizeremail=accountsjoin.email
     print(organizeremail)
 
@@ -1081,11 +1094,13 @@ class Accounts(db.Model):
 
 class regact(db.Model):
         __tablename__ = "regact"
-        regid=db.Column(db.Integer,primary_key=True)
         activityId=db.Column(db.Integer,ForeignKey ("activities.activityId"))
         userName=db.Column(db.Text,ForeignKey ("accounts.userName"))
         activity=relationship("Activities")
         account=relationship("Accounts")
+        __mapper_args__={
+            "primary_key":[activityId,userName]
+        }
 
 
 class venue(db.Model):
