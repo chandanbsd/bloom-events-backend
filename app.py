@@ -954,8 +954,8 @@ def participant_Details():
     print(userNameArray)
     print(emailsArray)
 
-    userdetails={ "userNames":userNameArray,
-                  "emailids":emailsArray}
+    userdetails={ "userNameList":userNameArray,
+                  "emailList":emailsArray}
 
     return jsonify({'status':'OK',
                         'body':userdetails})
