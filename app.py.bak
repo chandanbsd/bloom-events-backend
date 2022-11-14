@@ -75,17 +75,18 @@ def login():
             return jsonify({'status': 'OK',
             'body':{
                 'userName':account['userName'],
-            'firstName':account['firstName'],
-            'lastName':account['lastName'],
-            'age':account['age'],
-            'gender':account['gender'],
-             'isAvailable':account['isAvailable'],
-            'bio':account['bio'],
-            'categoryType':account['categoryType'],
-            'categoryLevel':account['categoryLevel'],
-            'city':account['city'],
-            'state':account['state'],
-            'email':account['email'],
+                'firstName':account['firstName'],
+                'lastName':account['lastName'],
+                'age':account['age'],
+                'gender':account['gender'],
+                'isAvailable':account['isAvailable'],
+                'bio':account['bio'],
+                'categoryType':account['categoryType'],
+                'categoryLevel':account['categoryLevel'],
+                'city':account['city'],
+                'state':account['state'],
+                'email':account['email'],
+                'isOwner':account['isOwner']
             }})
             # return render_template('index.html', msg = msg)
         else:
@@ -358,10 +359,10 @@ def registervenue():
    
     if request.method == 'POST' :
         print(request.json)
-        with open('counter.txt','r') as f:
+        with open('venue_counter.txt','r') as f:
             venueId=f.read()
             print(venueId)
-        with open('counter.txt','w') as f:
+        with open('venue_counter.txt','w') as f:
             f.write(str(int(venueId)+1))
            
         venueDescription=request.json['venueDescription']
@@ -374,10 +375,17 @@ def registervenue():
         venueCategory=request.json['venueCategory']
         venueCity=request.json['venueCity']
         venueState=request.json['venueState']
+
+        venuedate=request.json['creationDate']
+        venueslot=json.dumps(request.json['venueSlots'])
+        
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+        cursor.execute('Insert into booking Values(%s,%s,%s)', (venueId,venuedate,venueslot))
+        mysql.connection.commit()
+
         cursor.execute('INSERT INTO venue VALUES (%s,%s,%s, % s, %s, % s,%s,%s, %s,%s,%s)', (venueId,venueDescription,venueAddress,venueOwner,venueName,venueAvailability,venueOpen,venueHrCost,venueCategory,venueCity,venueState))
         mysql.connection.commit()
-        cursor.execute("Insert into booking values('','','')")
         cursor.execute('SELECT * FROM  Venue')
         data= cursor.fetchall()
         arr=[]
@@ -397,13 +405,11 @@ def venuelist():
        
         cursor.execute("select venue.venueId,venueDescription,venueAddress, venueOwner,venueName,venueAvailability,venueOpen,venueHrCost,venueCategory,venueCity,venueState, CONCAT('{',GROUP_CONCAT(CONCAT(venuedate,':',venueslots)),'}') as venueSlots from venue inner join booking on venue.venueId=booking.venueId GROUP By venueId")
         data= cursor.fetchall()
-        print(data)
         data_l=list(data)
         for i in data_l:
             i['venueSlots']=i['venueSlots'].replace('{2','{"2').replace(":",'":').replace(",2",',"2')
             a=json.loads(i['venueSlots'])
             i['venueSlots']=a
-        # print(data)
         return jsonify({
         'body':list(data),
         'status':'OK'
@@ -1096,6 +1102,19 @@ def participant_Details():
     return jsonify({'status':'OK',
                         'body':userdetails})
 
+@app.route("/venueopenclose",methods=['POST'])
+def venuestatus():
+    if request.method=="POST":
+        venueId=request.json['venueId']
+        venueOpen=request.json['venueOpen']
+        print(venueId, venueOpen)
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("Update  venue set venueOpen=%s where venueId=%s",(venueOpen,venueId))
+        mysql.connection.commit()
+        return ({'status':'OK'})
+    else:
+        return ({'status':'FAIL'})
+
 class activityPayment(db.Model):
     __tablename__="activityPayment"
     paymentId=db.Column(db.Integer,primary_key=True,nullable=False)
@@ -1126,7 +1145,6 @@ class Activities(db.Model):
     #activityState=db.Column(db.Text(25))
     activityVenueCost=db.Column(db.Integer,nullable=False)
     activityBookingDate=db.Column(db.Text(100))
-        
         
         
 class Accounts(db.Model):
