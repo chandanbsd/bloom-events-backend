@@ -528,51 +528,24 @@ def factivity():
         activityTime=got['activityTime'],
         activityVenueCost=got['activityVenueCost'],
         activityBookingDate=got['activityBookingDate'],
-        )
-
-    db.session.add(actobj)
-
-    db.session.commit()
-
-    #if encoded image is sent in the json slong wuth the activity request
-
-    print(actobj)
-
-    # print(request['activityId'])
-    # print(request.args.get('activityId'))
-    # print(request.files.keys())
-    # if request.method == 'POST':
-    #                                         # check if the post request has the file part
-    #     if 'file' not in request.files:
-    #         flash('No file part')
-    #         return redirect(request.url)
-    #     file = request.files['activityImage']
-        
-    #     print("file is",file)
-    #                                                              # If the user does not select a file, the browser submits an
-    #                                                             # empty file without a filename.
-    #     if file.filename == '':
-    #         flash('No selected file')
-    #         return redirect(request.url)
-    #     if file and allowed_file(file.filename):
-    #         filename = secure_filename(file.filename)
-    #                                                              # file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-    #                                                             # return redirect(url_for('upload_file', name=filename))
-    #         print("file in uploaded folder is"+app.config['UPLOAD_FOLDER'])
-
-    #                                                             # with open(app.config['UPLOAD_FOLDER']+"/"+filename, "rb") as img_file:
-    #         my_string = (file.read())
-    #         print(my_string)
-
-    image_obj=storeimages(
-        activityId=got['activityId'],
         activityImage=got['activityImage']
         )
 
-    db.session.add(image_obj)
+    db.session.add(actobj)
     db.session.commit()
 
-    return "activity_information_and_image_stored_succesfullly"
+    print(actobj)
+
+    imageobj=storeimages(activityId=got['activityId'],
+                        activityImage=got['activityImage'].encode('utf-8'))
+    db.session.add(imageobj)
+    db.session.commit()
+
+    print(imageobj)
+
+    print("activity_information_and_image_stored_succesfullly")
+
+    return jsonify({'status':'OK'})
     
 
 @app.route("/ra",methods=['GET'])
@@ -580,7 +553,8 @@ def returnacts():
  
     # q=Activities.query.all()
  
-    q=db.session.query(Activities,venue).filter(Activities.activityVenueId == venue.venueId).all()
+    q=db.session.query(Activities,venue,storeimages).filter(Activities.activityVenueId == venue.venueId,Activities.activityId==storeimages.activityId).all()
+
  
     if len(q):
         all_activities=[{ "activityId":Activities.activityId,
@@ -607,9 +581,9 @@ def returnacts():
         "venueHrCost":venue.venueHrCost,
         "venueCategory":venue.venueCategory,
         "venueCity":venue.venueCity,
-        "venueState":venue.venueState
-        
-        } for (Activities,venue) in q]
+        "venueState":venue.venueState,
+        "activityImage":storeimages.activityImage.decode('utf-8')
+        } for (Activities,venue,storeimages) in q]
 
         print(all_activities)
  
@@ -1219,7 +1193,7 @@ class storeimages(db.Model):
 UPLOAD_FOLDER = '/Users/mohitdalvi/Desktop/IUB/Software_Engg/bloomevents_files'
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 
-# app = Flask(__name__)
+
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def allowed_file(filename):
