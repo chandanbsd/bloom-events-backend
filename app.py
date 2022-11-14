@@ -1071,6 +1071,31 @@ def delete_activity_by_organizer():
 
     return jsonify({'status':'OK',
                         'body':'activitydeleted'})
+
+@app.route("/return_participant_Details",methods=['POST'])
+def participant_Details():
+    got=request.get_json()
+    print(got)
+
+    p=db.session.query(regact,Accounts).filter(regact.activityId==got["activityId"]).filter(regact.userName==Accounts.userName)
+    
+    print(p)
+    
+    userNameArray=[]
+    emailsArray=[]
+    for item in p:
+        userNameArray.append(item[0].userName)
+        emailsArray.append(item[1].email)
+        
+    print(userNameArray)
+    print(emailsArray)
+
+    userdetails={ "userNameList":userNameArray,
+                  "emailList":emailsArray}
+
+    return jsonify({'status':'OK',
+                        'body':userdetails})
+
 class activityPayment(db.Model):
     __tablename__="activityPayment"
     paymentId=db.Column(db.Integer,primary_key=True,nullable=False)
