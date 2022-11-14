@@ -546,9 +546,7 @@ def returnacts():
  
     # q=Activities.query.all()
  
-    q=db.session.query(Activities, venue).filter(Activities.activityVenueId == venue.venueId).all()
- 
-
+    q=db.session.query(Activities,venue).filter(Activities.activityVenueId == venue.venueId).all()
  
     if len(q):
         all_activities=[{ "activityId":Activities.activityId,
@@ -1167,8 +1165,9 @@ class booking(db.Model):
 
 class storeimages(db.Model):
     __tablename__="storeimages"
-    picid=db.Column(db.Integer,primary_key=True)
-    pic=db.Column(db.LargeBinary)
+    imageId=db.Column(db.Integer,primary_key=True)
+    activityId=db.Column(db.Integer,ForeignKey("activities.activityId"))
+    activityImage=db.Column(db.LargeBinary)
 
 UPLOAD_FOLDER = '/Users/mohitdalvi/Desktop/IUB/Software_Engg/bloomevents_files'
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
@@ -1182,13 +1181,18 @@ def allowed_file(filename):
 
 @app.route("/store_image",methods=['GET','POST'])
 def upload_file():
+    
+    # print(request['activityId'])
+    print(request.args.get('activityId'))
+    print(request.files.keys())
     if request.method == 'POST':
         # check if the post request has the file part
         if 'file' not in request.files:
             flash('No file part')
             return redirect(request.url)
-        file = request.files['file']
-        print(file)
+        file = request.files['activityImage']
+        
+        print("file is",file)
         # If the user does not select a file, the browser submits an
         # empty file without a filename.
         if file.filename == '':
@@ -1198,14 +1202,15 @@ def upload_file():
             filename = secure_filename(file.filename)
             # file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             # return redirect(url_for('upload_file', name=filename))
-            print(app.config['UPLOAD_FOLDER'])
+            print("file in uploaded folder is"+app.config['UPLOAD_FOLDER'])
 
             # with open(app.config['UPLOAD_FOLDER']+"/"+filename, "rb") as img_file:
-            my_string = base64.b64encode(file.read())
+            my_string = (file.read())
             print(my_string)
 
             image_obj=storeimages(
-                pic=my_string
+                activityId=request.args.get('activityId'),
+                activityImage=my_string
             )
 
             db.session.add(image_obj)
@@ -1214,16 +1219,17 @@ def upload_file():
     return "imagestoredsuccessfully"
 
 from flask import send_file
+import io
 
 @app.route("/return_image",methods=['GET'])
 def return_image():
-    image_stored=storeimages.query.filter(storeimages.picid==9).all()
+    image_stored=storeimages.query.all()
     print(image_stored)
 
     for item in image_stored:
-        print(type((item.pic).decode()))
+        # print(type((item.pic).decode()))
     # print(base64.b64decode(storeimages.pic))
-    print(type(base64.b64decode(item.pic)))
+    # print(type(base64.b64decode(item.pic)))
 
     # retrieved_img=[{ 
     # "returned_img":base64.b64decode(storeimages.pic)
@@ -1231,8 +1237,8 @@ def return_image():
         
     # return jsonify({'status':'OK',
     #                 'body':retrieved_img})
-    return send_file(base64.b64decode(item.pic),mimetype='image/gif')
-    
+        return send_file(io.BytesIO(item.activityImage),mimetype='image/gif')
+    return " "
     
     
     
