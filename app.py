@@ -949,30 +949,75 @@ def activityPayment():
     
     return({'status':'OK'})
 
-@app.route("/return_participant_Details",methods=['POST'])
-def participant_Details():
-    got=request.get_json()
-    print(got)
-    p=db.session.query(regact,Accounts).filter(regact.activityId==got["activityId"]).filter(regact.userName==Accounts.userName)
-    userNameArray=[]
-    emailsArray=[]
-    for item in p:
-        userNameArray.append(item[0].userName)
-        emailsArray.append(item[1].email)
-        
-
-    userdetails={ "userNameList":userNameArray,
-                  "emailList":emailsArray}
+@app.route('/bookmark', methods =['GET', 'POST'])
+def bookmark():
+    if request.method=="POST":
+        userName=request.json['userName']
+        favVenue=request.json['favVenue']
+        print(str(favVenue))
+        favActivity=request.json['favActivity']
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('select * from bookmark where userName=% s', ( userName, ))
+        account = cursor.fetchone()
+ 
+        if account:
+            cursor.execute("update bookmark set favVenue = %s, favActivity = %s where userName = %s",(str(favVenue),str(favActivity), userName))
+            mysql.connection.commit()
+        else:
+            cursor.execute("insert into bookmark values(%s,%s,%s)",(userName,str(favVenue),str(favActivity)))
+            mysql.connection.commit()
+        return ({'status':'OK'}) 
+    else:
+        return ({'status':'FAIL'})
+    
 
     return jsonify({'status':'OK',
                         'body':userdetails})
-
     
 
 
+@app.route('/getbookmark', methods =['GET', 'POST'])
+def getbookmark():
+    if request.method=="POST":
+        userName=request.json['userName']
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('select * from bookmark where userName=% s', ( userName, ))
+        account = cursor.fetchone()
+        if not account:
+            return jsonify({'status': 'OK',
+            'body':{
+                'userName':userName,
+                'favActivity':[],
+                'favVenue':[]
+            }})
 
+        else:
 
-    
+            if ',' not in account['favActivity']:
+                account['favActivity']=account['favActivity'].strip('][')
+            else:
+                account['favActivity']=account['favActivity'].strip('][').split(',')
+            if ',' not in account['favVenue']:
+                account['favVenue']=account['favVenue'].strip('][')
+            else:
+                account['favVenue']=account['favVenue'].strip('][').split(',')
+            favVenue=[]
+            favActivity=[]
+            for i in account['favVenue']:
+                favVenue.append(int(i))
+            for i in account['favActivity']:
+                favActivity.append(int(i))
+            print(favVenue)
+            print(favActivity)
+            return jsonify({'status': 'OK',
+                'body':{
+                    'userName':account['userName'],
+                    'favActivity':favActivity,
+                    'favVenue':favVenue
+                }})
+    else:
+        return ({'status':'FAIL'})
+        
 app.route("/delete_activity_organizer",methods=['POST'])
 def delete_activity_by_organizer():
     got=request.get_json()
@@ -1026,37 +1071,6 @@ def delete_activity_by_organizer():
 
     return jsonify({'status':'OK',
                         'body':'activitydeleted'})
-
-@app.route('/getbookmark', methods =['GET', 'POST'])
-def getbookmark():
-    if request.method=="POST":
-        userName=request.json['userName']
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute('select * from bookmark where userName=% s', ( userName, ))
-        account = cursor.fetchone()
-        print(account)
-        account['favActivity']=account['favActivity'].strip('][').split(',')
-        account['favVenue']=account['favVenue'].strip('][').split(',')
-        favVenue=[]
-        favActivity=[]
-        for i in account['favVenue']:
-            favVenue.append(int(i))
-
-        for i in account['favActivity']:
-            favActivity.append(int(i))
-        print(favVenue)
-        print(favActivity)
-
-        return jsonify({'status': 'OK',
-            'body':{
-                'userName':account['userName'],
-                'favActivity':favActivity,
-                'favVenue':favVenue
-            }})
-    else:
-        return ({'status':'FAIL'})
-        
-
 class activityPayment(db.Model):
     __tablename__="activityPayment"
     paymentId=db.Column(db.Integer,primary_key=True,nullable=False)
