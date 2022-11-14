@@ -534,12 +534,46 @@ def factivity():
 
     db.session.commit()
 
+    #if encoded image is sent in the json slong wuth the activity request
+
     print(actobj)
 
-    # got=request.get_json()
-    # print(got)
-    # print(got['activityId'])
-    return ""
+    # print(request['activityId'])
+    # print(request.args.get('activityId'))
+    # print(request.files.keys())
+    # if request.method == 'POST':
+    #                                         # check if the post request has the file part
+    #     if 'file' not in request.files:
+    #         flash('No file part')
+    #         return redirect(request.url)
+    #     file = request.files['activityImage']
+        
+    #     print("file is",file)
+    #                                                              # If the user does not select a file, the browser submits an
+    #                                                             # empty file without a filename.
+    #     if file.filename == '':
+    #         flash('No selected file')
+    #         return redirect(request.url)
+    #     if file and allowed_file(file.filename):
+    #         filename = secure_filename(file.filename)
+    #                                                              # file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+    #                                                             # return redirect(url_for('upload_file', name=filename))
+    #         print("file in uploaded folder is"+app.config['UPLOAD_FOLDER'])
+
+    #                                                             # with open(app.config['UPLOAD_FOLDER']+"/"+filename, "rb") as img_file:
+    #         my_string = (file.read())
+    #         print(my_string)
+
+    image_obj=storeimages(
+        activityId=got['activityId'],
+        activityImage=got['activityImage']
+        )
+
+    db.session.add(image_obj)
+    db.session.commit()
+
+    return "activity_information_and_image_stored_succesfullly"
+    
 
 @app.route("/ra",methods=['GET'])
 def returnacts():
@@ -872,9 +906,9 @@ def insert_review():
     
 @app.route("/returnreview",methods=['GET'])
 def return_review():
-
+    got=request.get_json()
     
-    r=activityRating.query.all()
+    r=activityRating.query.filter(activityRating.activityId==got['activityId']).all()
     
     if len(r):
         all_reviews=[{ "reviewId":activityRating.reviewId,
@@ -1004,6 +1038,13 @@ def delete_activity_by_organizer():
     #deletion from the payment table
     d_activityPayment=db.session.query(activityPayment).filter(activityPayment.activityId==got['activityId']).all()
     for item in d_activityPayment:
+        db.session.delete(item)
+        db.session.commit()
+
+    #deletion from the activityRating table
+    d_activityRating=db.session.query(activityRating).filter(activityRating.activityId==got['activityId']).all()
+    #print(d_regact)
+    for item in d_activityRating:
         db.session.delete(item)
         db.session.commit()
     
@@ -1153,6 +1194,11 @@ class venueRating(db.Model):
     venue=relationship("venue")
     account=relationship("Accounts")
 
+# <<<<<<< HEAD
+# =======
+
+
+# >>>>>>> 4f4d315025faf1433b5b0855d2e1450e4d6dafe6
 class booking(db.Model):
     __tablename__="booking"
     venueId=db.Column(db.Integer,ForeignKey("activities.activityVenueId"))
@@ -1161,6 +1207,7 @@ class booking(db.Model):
     __mapper_args__ = {
         "primary_key": [venueId, venuedate]
     }
+# <<<<<<< HEAD
 
 
 class storeimages(db.Model):
@@ -1205,7 +1252,7 @@ def upload_file():
             print("file in uploaded folder is"+app.config['UPLOAD_FOLDER'])
 
             # with open(app.config['UPLOAD_FOLDER']+"/"+filename, "rb") as img_file:
-            my_string = (file.read())
+            my_string = (base64.b64encode(file.read()))
             print(my_string)
 
             image_obj=storeimages(
@@ -1246,6 +1293,8 @@ def return_image():
 
 
 
+# =======
+# >>>>>>> 4f4d315025faf1433b5b0855d2e1450e4d6dafe6
     
 
 
