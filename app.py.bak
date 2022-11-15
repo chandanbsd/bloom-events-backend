@@ -428,7 +428,7 @@ def venuelist():
             i['venueSlots']=a
             cursor.execute("select venueimage from venueimages where venueid={}".format(i["venueId"]))
             data= cursor.fetchone()
-            i['venueImage'] = str(data["venueimage"])
+            i['venueImage'] = str(data["venueimage"].decode("utf-8"))
 
             # file1 = open("MyFile.txt", "w")
             # file1.write(str())
@@ -481,7 +481,7 @@ def booking():
         activityTime=request.json['activityTime']
         activityRemainingCapacity=request.json['activityRemainingCapacity']      
         venueId=request.json['activityVenueId']
-        venueImage=request.json['venueImage']
+        activityImage=request.json['activityImage']
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute('INSERT into activities Values(%s,%s,%s,%s,%s,%s,%s,%s,%s, %s, %s, % s,%s,%s, %s,%s)',(activityId,activityName,activityDescription,activityCapacity,activityLocation,activityCategory,activityRemainingCapacity,activityAgeRange,activityCost,activityCostAmount,activityOrganizer,activityVenueId,activityDate,activityTime,activityVenueCost,activityBookingDate))        
         mysql.connection.commit()
@@ -491,6 +491,7 @@ def booking():
             isthere=cursor.fetchone()
             if isthere:
                 venueslot=json.dumps(venueSlots[i])
+                print(venueslot)
                 cursor.execute('update booking set venueslots=%s where venuedate=%s',(venueslot,i))
                 mysql.connection.commit()
 
@@ -1047,12 +1048,21 @@ def getbookmark():
                 account['favVenue']=account['favVenue'].strip('][').split(',')
             favVenue=[]
             favActivity=[]
-            for i in account['favVenue']:
-                favVenue.append(int(i))
-            for i in account['favActivity']:
-                favActivity.append(int(i))
+
+            if len(account['favVenue']) > 0 and len(account['favVenue']) <= 2:
+                print(account['favVenue'])
+                favVenue.append(int(account['favVenue']))
+            else:
+                for i in account['favVenue']:
+                    favVenue.append(int(i))
+            
+            if len(account['favActivity']) > 0 and len(account['favActivity']) <= 2:
+                favActivity.append(int(account['favActivity']))
+            else:
+                for i in account['favActivity']:
+                    favActivity.append(int(i))
             print(favVenue)
-            print(favActivity)
+            # print(favActivity)
             return jsonify({'status': 'OK',
                 'body':{
                     'userName':account['userName'],
