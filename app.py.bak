@@ -402,6 +402,10 @@ def registervenue():
         data= cursor.fetchall()
         arr=[]
 
+        imageobj=venueimages(venueId=venueId, venueImage=request.json['venueImage'].encode('utf-8'))
+        db.session.add(imageobj)
+        db.session.commit()
+
         return jsonify({
         'status':'OK'
         })
@@ -422,10 +426,23 @@ def venuelist():
             i['venueSlots']=i['venueSlots'].replace('{2','{"2').replace(":",'":').replace(",2",',"2')
             a=json.loads(i['venueSlots'])
             i['venueSlots']=a
+            cursor.execute("select venueimage from venueimages where venueid={}".format(i["venueId"]))
+            data= cursor.fetchone()
+            i['venueImage'] = str(data["venueimage"])
+
+            # file1 = open("MyFile.txt", "w")
+            # file1.write(str())
+            # file1.close()
         return jsonify({
-        'body':list(data),
+        'body':list(data_l),
         'status':'OK'
         })
+
+        return jsonify({
+            'body': {},
+            'status':'FAIL'
+            })
+        
    
     return jsonify({
         'body': {},
@@ -464,6 +481,7 @@ def booking():
         activityTime=request.json['activityTime']
         activityRemainingCapacity=request.json['activityRemainingCapacity']      
         venueId=request.json['activityVenueId']
+        venueImage=request.json['venueImage']
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute('INSERT into activities Values(%s,%s,%s,%s,%s,%s,%s,%s,%s, %s, %s, % s,%s,%s, %s,%s)',(activityId,activityName,activityDescription,activityCapacity,activityLocation,activityCategory,activityRemainingCapacity,activityAgeRange,activityCost,activityCostAmount,activityOrganizer,activityVenueId,activityDate,activityTime,activityVenueCost,activityBookingDate))        
         mysql.connection.commit()
@@ -1370,6 +1388,12 @@ class storeimages(db.Model):
     imageId=db.Column(db.Integer,primary_key=True)
     activityId=db.Column(db.Integer,ForeignKey("activities.activityId"))
     activityImage=db.Column(db.LargeBinary)
+
+class venueimages(db.Model):
+    __tablename__="venueimages"
+    imageId=db.Column(db.Integer,primary_key=True)
+    venueId=db.Column(db.Integer,ForeignKey("venue.venueId"))
+    venueImage=db.Column(db.LargeBinary)
 
 UPLOAD_FOLDER = '/Users/mohitdalvi/Desktop/IUB/Software_Engg/bloomevents_files'
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
