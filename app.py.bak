@@ -19,6 +19,17 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, ForeignKey, Integer, Table
 from sqlalchemy.orm import declarative_base, relationship
 import json
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Index, LargeBinary,BigInteger, String, Float, Text, Boolean
+from sqlalchemy import create_engine
+from sqlalchemy.engine.url import URL
+
+
+
+import os
+from flask import Flask, flash, request, redirect, url_for
+from werkzeug.utils import secure_filename
+import base64
 
 
 Base = declarative_base()
@@ -49,6 +60,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 
 db=SQLAlchemy(app)
+app.secret_key = 'super secret key'
 
 
 
@@ -522,26 +534,32 @@ def factivity():
         activityTime=got['activityTime'],
         activityVenueCost=got['activityVenueCost'],
         activityBookingDate=got['activityBookingDate'],
+        activityImage=got['activityImage']
         )
 
     db.session.add(actobj)
-
     db.session.commit()
 
     print(actobj)
 
-    # got=request.get_json()
-    # print(got)
-    # print(got['activityId'])
-    return ""
+    imageobj=storeimages(activityId=got['activityId'],
+                        activityImage=got['activityImage'].encode('utf-8'))
+    db.session.add(imageobj)
+    db.session.commit()
+
+    print(imageobj)
+
+    print("activity_information_and_image_stored_succesfullly")
+
+    return jsonify({'status':'OK'})
+    
 
 @app.route("/ra",methods=['GET'])
 def returnacts():
  
     # q=Activities.query.all()
  
-    q=db.session.query(Activities, venue).filter(Activities.activityVenueId == venue.venueId).all()
- 
+    q=db.session.query(Activities,venue,storeimages).filter(Activities.activityVenueId == venue.venueId,Activities.activityId==storeimages.activityId).all()
 
  
     if len(q):
@@ -569,9 +587,9 @@ def returnacts():
         "venueHrCost":venue.venueHrCost,
         "venueCategory":venue.venueCategory,
         "venueCity":venue.venueCity,
-        "venueState":venue.venueState
-        
-        } for (Activities,venue) in q]
+        "venueState":venue.venueState,
+        "activityImage":storeimages.activityImage.decode('utf-8')
+        } for (Activities,venue,storeimages) in q]
 
         print(all_activities)
  
@@ -868,9 +886,9 @@ def insert_review():
     
 @app.route("/returnreview",methods=['GET'])
 def return_review():
-
+    got=request.get_json()
     
-    r=activityRating.query.all()
+    r=activityRating.query.filter(activityRating.activityId==got['activityId']).all()
     
     if len(r):
         all_reviews=[{ "reviewId":activityRating.reviewId,
@@ -1102,6 +1120,81 @@ def participant_Details():
     return jsonify({'status':'OK',
                         'body':userdetails})
 
+
+
+@app.route("/delete_activity_organizer",methods=['POST'])
+def delete_activity_by_organizer():
+    got=request.get_json()
+    
+    #deletion from the regact table
+    d_regact=db.session.query(regact).filter(regact.activityId==got['activityId']).all()
+    #print(d_regact)
+    for item in d_regact:
+        db.session.delete(item)
+        db.session.commit()
+
+    #deleltion from the rating table
+    d_activityRating=db.session.query(activityRating).filter(activityRating.activityId==got['activityId']).all()
+    for item in d_activityRating:
+        db.session.delete(item)
+        db.session.commit()
+
+    #deletion from the payment table
+    d_activityPayment=db.session.query(activityPayment).filter(activityPayment.activityId==got['activityId']).all()
+    for item in d_activityPayment:
+        db.session.delete(item)
+        db.session.commit()
+
+    #deletion from the activityRating table
+    d_activityRating=db.session.query(activityRating).filter(activityRating.activityId==got['activityId']).all()
+    #print(d_regact)
+    for item in d_activityRating:
+        db.session.delete(item)
+        db.session.commit()
+    
+    #updation in the venue table and then delete from the activities table
+    d_activities=db.session.query(Activities).filter(Activities.activityId==got['activityId']).all()
+    
+    print(d_activities)
+    for act_item in d_activities:
+        print(act_item.activityId)
+        act_date=act_item.activityDate
+        act_time=act_item.activityTime
+        print(act_date)
+        print(act_time)
+        d_bookings=db.session.query(booking).filter(booking.venueId==act_item.activityVenueId,booking.venuedate==act_date).all()
+        print(d_bookings)
+
+        for book_item in d_bookings:
+            print(book_item.venueslots)
+            splitted_slots=book_item.venueslots.split(',')
+            print(splitted_slots)
+
+            for value in act_time:
+                print(value)
+                splitted_slots[value]="open/-1"
+                print(splitted_slots)
+                
+            length=len(splitted_slots)
+            list_to_string=''.join([str(elem)+',' for elem in splitted_slots[0:length-1]])
+
+            
+            list_to_string = list_to_string + ''.join(str(splitted_slots[-1]))
+            print(list_to_string)
+
+            book_item.venueslots=list_to_string
+
+            db.session.commit()
+
+            #delete the activity also
+            db.session.delete(act_item)
+            db.session.commit()
+
+
+    return jsonify({'status':'OK',
+                        'body':'activitydeleted'})
+
+
 @app.route("/venueopenclose",methods=['POST'])
 def venuestatus():
     if request.method=="POST":
@@ -1114,6 +1207,7 @@ def venuestatus():
         return ({'status':'OK'})
     else:
         return ({'status':'FAIL'})
+
 
 class activityPayment(db.Model):
     __tablename__="activityPayment"
@@ -1227,6 +1321,90 @@ class booking(db.Model):
     __mapper_args__ = {
         "primary_key": [venueId, venuedate]
     }
+
+class storeimages(db.Model):
+    __tablename__="storeimages"
+    imageId=db.Column(db.Integer,primary_key=True)
+    activityId=db.Column(db.Integer,ForeignKey("activities.activityId"))
+    activityImage=db.Column(db.LargeBinary)
+
+UPLOAD_FOLDER = '/Users/mohitdalvi/Desktop/IUB/Software_Engg/bloomevents_files'
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route("/store_image",methods=['GET','POST'])
+def upload_file():
+    
+    # print(request['activityId'])
+    print(request.args.get('activityId'))
+    print(request.files.keys())
+    if request.method == 'POST':
+        # check if the post request has the file part
+        if 'file' not in request.files:
+            flash('No file part')
+            return redirect(request.url)
+        file = request.files['activityImage']
+        
+        print("file is",file)
+        # If the user does not select a file, the browser submits an
+        # empty file without a filename.
+        if file.filename == '':
+            flash('No selected file')
+            return redirect(request.url)
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            # file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            # return redirect(url_for('upload_file', name=filename))
+            print("file in uploaded folder is"+app.config['UPLOAD_FOLDER'])
+
+            # with open(app.config['UPLOAD_FOLDER']+"/"+filename, "rb") as img_file:
+            my_string = (base64.b64encode(file.read()))
+            print(my_string)
+
+            image_obj=storeimages(
+                activityId=request.args.get('activityId'),
+                activityImage=my_string
+            )
+
+            db.session.add(image_obj)
+            db.session.commit()
+
+    return "imagestoredsuccessfully"
+
+from flask import send_file
+import io
+
+@app.route("/return_image",methods=['GET'])
+def return_image():
+    image_stored=storeimages.query.all()
+    print(image_stored)
+
+    for item in image_stored:
+        # print(type((item.pic).decode()))
+    # print(base64.b64decode(storeimages.pic))
+    # print(type(base64.b64decode(item.pic)))
+
+    # retrieved_img=[{ 
+    # "returned_img":base64.b64decode(storeimages.pic)
+    # } for storeimages in image_stored]
+        
+    # return jsonify({'status':'OK',
+    #                 'body':retrieved_img})
+        return send_file(io.BytesIO(item.activityImage),mimetype='image/gif')
+    return " "
+    
+    
+    
+
+
+
+
     
 
 
