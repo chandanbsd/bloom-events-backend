@@ -461,7 +461,7 @@ def venuelist():
 
 @app.route('/venuebooking', methods =['GET', 'POST'])
 
-def booking():
+def venuebooking():
 
     if request.method == 'POST':
 
