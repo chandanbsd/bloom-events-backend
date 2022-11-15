@@ -37,14 +37,23 @@ Base = declarative_base()
 app = Flask(__name__)
 CORS(app)
 # mail= Mail(app)
+# app.secret_key = 'your secret key'
+# app.config['MYSQL_HOST'] = 'EnterDetailsHere'
+# app.config['MYSQL_USER'] = 'EnterUserName'
+# app.config['MYSQL_PASSWORD'] = '#Password'
+# app.config['MYSQL_DB'] = 'bloomdb'
+# db_uri=app.config['SQLALCHEMY_DATABASE_URI'] ='mysql://EnterUserName:#Password@EnterDetailsHere:3306/bloomdb' 
+# # “dialect+driver://username:password@host:port/database”
+# app.config['SQLALCHEMY_TR\\ACK_MODIFICATIONS'] = False
+
 app.secret_key = 'your secret key'
-app.config['MYSQL_HOST'] = 'EnterDetailsHere'
-app.config['MYSQL_USER'] = 'EnterUserName'
-app.config['MYSQL_PASSWORD'] = '#Password'
+app.config['MYSQL_HOST'] = 'localhost'
+app.config['MYSQL_USER'] = 'root'
+app.config['MYSQL_PASSWORD'] = 'root'
 app.config['MYSQL_DB'] = 'bloomdb'
-db_uri=app.config['SQLALCHEMY_DATABASE_URI'] ='mysql://EnterUserName:#Password@EnterDetailsHere:3306/bloomdb' 
+temp=app.config['SQLALCHEMY_DATABASE_URI'] ='mysql://root:root@localhost:3306/bloomdb' 
 # “dialect+driver://username:password@host:port/database”
-app.config['SQLALCHEMY_TR\\ACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 app.config['MAIL_SERVER']='smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
