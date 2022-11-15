@@ -475,6 +475,14 @@ def booking():
                 venueslot=json.dumps(venueSlots[i])
                 cursor.execute('update booking set venueslots=%s where venuedate=%s',(venueslot,i))
                 mysql.connection.commit()
+
+                imageobj=storeimages(activityId=activityId,
+                                    activityImage=request.json['activityImage'].encode('utf-8'))
+                db.session.add(imageobj)
+                db.session.commit()
+                print(imageobj)
+                print("activity_information_and_image_stored_succesfullly")
+
             else:
                 venueslot=json.dumps(venueSlots[i])
                 cursor.execute('Insert into booking Values(%s,%s,%s)', (venueId,i,venueslot))
@@ -516,7 +524,6 @@ def booking():
 @app.route("/activity",methods=['POST'])
 def factivity():
     got=request.get_json()
-    print(got)
     actobj=Activities(
         activityId = got['activityId'],
         activityName=got['activityName'],
@@ -536,11 +543,6 @@ def factivity():
         activityBookingDate=got['activityBookingDate'],
         activityImage=got['activityImage']
         )
-
-    db.session.add(actobj)
-    db.session.commit()
-
-    print(actobj)
 
     imageobj=storeimages(activityId=got['activityId'],
                         activityImage=got['activityImage'].encode('utf-8'))
@@ -884,7 +886,7 @@ def insert_review():
     else:
         return ({'status':'Fail'})
     
-@app.route("/returnreview",methods=['GET'])
+@app.route("/returnreview",methods=['POST'])
 def return_review():
     got=request.get_json()
     
@@ -1208,6 +1210,47 @@ def venuestatus():
     else:
         return ({'status':'FAIL'})
 
+@app.route("/venuereviews",methods=['POST'])
+def venuereview():
+    print(request.json)
+    if request.method=="POST":
+        venueId=request.json['venueId']
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("select * from venueRating where venueId=%s",(venueId,))
+        data=cursor.fetchall()
+        if data:
+            return jsonify({'status': 'OK',
+                    'body':list(data)})
+        else:
+            return jsonify({'status': 'OK',
+                    'body':[]})
+    else:
+        return ({'status':'FAIL'})
+
+@app.route("/getvenuebyowner",methods=['POST'])
+def getvenuebyowner():
+    if request.method=="GET":
+        userName=request.json['userName']
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("select concat(venue.venueId,': ',group_concat(activities.activityId)) as d from venue inner join activities on venue.venueId=activities.activityVenueId where venue.venueOwner=%s group by venue.venueId",(userName,))
+        data=cursor.fetchall()
+        print(data)
+        arr=[]
+        d_val={}
+        for i in data:
+            venueid=i['d'].split(':')[0]
+            activity_list=i['d'].split(':')[1]
+            activity_list=activity_list.split(',')
+            act_list_f=[]
+            for i in activity_list:
+                act_list_f.append(int(i))
+            d_val[int(venueid)]=act_list_f
+        print(d_val)
+        return jsonify({'status': 'OK',
+
+                'body':d_val})
+    else:
+        return ({'status':'FAIL'})
 
 class activityPayment(db.Model):
     __tablename__="activityPayment"
