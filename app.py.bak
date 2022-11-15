@@ -75,17 +75,18 @@ def login():
             return jsonify({'status': 'OK',
             'body':{
                 'userName':account['userName'],
-            'firstName':account['firstName'],
-            'lastName':account['lastName'],
-            'age':account['age'],
-            'gender':account['gender'],
-             'isAvailable':account['isAvailable'],
-            'bio':account['bio'],
-            'categoryType':account['categoryType'],
-            'categoryLevel':account['categoryLevel'],
-            'city':account['city'],
-            'state':account['state'],
-            'email':account['email'],
+                'firstName':account['firstName'],
+                'lastName':account['lastName'],
+                'age':account['age'],
+                'gender':account['gender'],
+                'isAvailable':account['isAvailable'],
+                'bio':account['bio'],
+                'categoryType':account['categoryType'],
+                'categoryLevel':account['categoryLevel'],
+                'city':account['city'],
+                'state':account['state'],
+                'email':account['email'],
+                'isOwner':account['isOwner']
             }})
             # return render_template('index.html', msg = msg)
         else:
@@ -358,10 +359,10 @@ def registervenue():
    
     if request.method == 'POST' :
         print(request.json)
-        with open('counter.txt','r') as f:
+        with open('venue_counter.txt','r') as f:
             venueId=f.read()
             print(venueId)
-        with open('counter.txt','w') as f:
+        with open('venue_counter.txt','w') as f:
             f.write(str(int(venueId)+1))
            
         venueDescription=request.json['venueDescription']
@@ -374,10 +375,17 @@ def registervenue():
         venueCategory=request.json['venueCategory']
         venueCity=request.json['venueCity']
         venueState=request.json['venueState']
+
+        venuedate=request.json['creationDate']
+        venueslot=json.dumps(request.json['venueSlots'])
+        
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+        cursor.execute('Insert into booking Values(%s,%s,%s)', (venueId,venuedate,venueslot))
+        mysql.connection.commit()
+
         cursor.execute('INSERT INTO venue VALUES (%s,%s,%s, % s, %s, % s,%s,%s, %s,%s,%s)', (venueId,venueDescription,venueAddress,venueOwner,venueName,venueAvailability,venueOpen,venueHrCost,venueCategory,venueCity,venueState))
         mysql.connection.commit()
-        cursor.execute("Insert into booking values('','','')")
         cursor.execute('SELECT * FROM  Venue')
         data= cursor.fetchall()
         arr=[]
@@ -397,13 +405,11 @@ def venuelist():
        
         cursor.execute("select venue.venueId,venueDescription,venueAddress, venueOwner,venueName,venueAvailability,venueOpen,venueHrCost,venueCategory,venueCity,venueState, CONCAT('{',GROUP_CONCAT(CONCAT(venuedate,':',venueslots)),'}') as venueSlots from venue inner join booking on venue.venueId=booking.venueId GROUP By venueId")
         data= cursor.fetchall()
-        print(data)
         data_l=list(data)
         for i in data_l:
             i['venueSlots']=i['venueSlots'].replace('{2','{"2').replace(":",'":').replace(",2",',"2')
             a=json.loads(i['venueSlots'])
             i['venueSlots']=a
-        # print(data)
         return jsonify({
         'body':list(data),
         'status':'OK'
@@ -949,20 +955,27 @@ def activityPayment():
     
     return({'status':'OK'})
 
-@app.route("/return_participant_Details",methods=['POST'])
-def participant_Details():
-    got=request.get_json()
-    print(got)
-    p=db.session.query(regact,Accounts).filter(regact.activityId==got["activityId"]).filter(regact.userName==Accounts.userName)
-    userNameArray=[]
-    emailsArray=[]
-    for item in p:
-        userNameArray.append(item[0].userName)
-        emailsArray.append(item[1].email)
-        
-
-    userdetails={ "userNameList":userNameArray,
-                  "emailList":emailsArray}
+@app.route('/bookmark', methods =['GET', 'POST'])
+def bookmark():
+    if request.method=="POST":
+        userName=request.json['userName']
+        favVenue=request.json['favVenue']
+        print(str(favVenue))
+        favActivity=request.json['favActivity']
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('select * from bookmark where userName=% s', ( userName, ))
+        account = cursor.fetchone()
+ 
+        if account:
+            cursor.execute("update bookmark set favVenue = %s, favActivity = %s where userName = %s",(str(favVenue),str(favActivity), userName))
+            mysql.connection.commit()
+        else:
+            cursor.execute("insert into bookmark values(%s,%s,%s)",(userName,str(favVenue),str(favActivity)))
+            mysql.connection.commit()
+        return ({'status':'OK'}) 
+    else:
+        return ({'status':'FAIL'})
+    
 
     return jsonify({'status':'OK',
                         'body':userdetails})
@@ -976,28 +989,132 @@ def getbookmark():
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute('select * from bookmark where userName=% s', ( userName, ))
         account = cursor.fetchone()
-        print(account)
-        account['favActivity']=account['favActivity'].strip('][').split(',')
-        account['favVenue']=account['favVenue'].strip('][').split(',')
-        favVenue=[]
-        favActivity=[]
-        for i in account['favVenue']:
-            favVenue.append(int(i))
-
-        for i in account['favActivity']:
-            favActivity.append(int(i))
-        print(favVenue)
-        print(favActivity)
-
-        return jsonify({'status': 'OK',
+        if not account:
+            return jsonify({'status': 'OK',
             'body':{
-                'userName':account['userName'],
-                'favActivity':favActivity,
-                'favVenue':favVenue
+                'userName':userName,
+                'favActivity':[],
+                'favVenue':[]
             }})
+
+        else:
+
+            if ',' not in account['favActivity']:
+                account['favActivity']=account['favActivity'].strip('][')
+            else:
+                account['favActivity']=account['favActivity'].strip('][').split(',')
+            if ',' not in account['favVenue']:
+                account['favVenue']=account['favVenue'].strip('][')
+            else:
+                account['favVenue']=account['favVenue'].strip('][').split(',')
+            favVenue=[]
+            favActivity=[]
+            for i in account['favVenue']:
+                favVenue.append(int(i))
+            for i in account['favActivity']:
+                favActivity.append(int(i))
+            print(favVenue)
+            print(favActivity)
+            return jsonify({'status': 'OK',
+                'body':{
+                    'userName':account['userName'],
+                    'favActivity':favActivity,
+                    'favVenue':favVenue
+                }})
     else:
         return ({'status':'FAIL'})
         
+app.route("/delete_activity_organizer",methods=['POST'])
+def delete_activity_by_organizer():
+    got=request.get_json()
+    
+    #deletion from the regact table
+    d_regact=db.session.query(regact).filter(regact.activityId==got['activityId']).all()
+    #print(d_regact)
+    for item in d_regact:
+        db.session.delete(item)
+        db.session.commit()
+    #deleltion from the rating table
+    d_activityRating=db.session.query(activityRating).filter(activityRating.activityId==got['activityId']).all()
+    for item in d_activityRating:
+        db.session.delete(item)
+        db.session.commit()
+        d_activities=db.session.query(Activities).filter(Activities.activityId==got['activityId']).all()
+        print(d_activities)
+    for act_item in d_activities:
+        print(act_item.activityId)
+        act_date=act_item.activityDate
+        act_time=act_item.activityTime
+        print(act_date)
+        print(act_time)
+        d_bookings=db.session.query(booking).filter(booking.venueId==act_item.activityVenueId,booking.venuedate==act_date).all()
+        print(d_bookings)
+        for book_item in d_bookings:
+            print(book_item.venueslots)
+            splitted_slots=book_item.venueslots.split(',')
+            print(splitted_slots)
+
+            for value in act_time:
+                print(value)
+                splitted_slots[value]="open/-1"
+                print(splitted_slots)
+                
+            length=len(splitted_slots)
+            list_to_string=''.join([str(elem)+',' for elem in splitted_slots[0:length-1]])
+
+            
+            list_to_string = list_to_string + ''.join(str(splitted_slots[-1]))
+            print(list_to_string)
+
+            book_item.venueslots=list_to_string
+
+            db.session.commit()
+
+            #delete the activity also
+            db.session.delete(act_item)
+            db.session.commit()
+
+
+    return jsonify({'status':'OK',
+                        'body':'activitydeleted'})
+
+@app.route("/return_participant_Details",methods=['POST'])
+def participant_Details():
+    got=request.get_json()
+    print(got)
+
+    p=db.session.query(regact,Accounts).filter(regact.activityId==got["activityId"]).filter(regact.userName==Accounts.userName)
+    
+    print(p)
+    
+    userNameArray=[]
+    emailsArray=[]
+    for item in p:
+        userNameArray.append(item[0].userName)
+        emailsArray.append(item[1].email)
+        
+    print(userNameArray)
+    print(emailsArray)
+
+    userdetails={ "userNameList":userNameArray,
+                  "emailList":emailsArray}
+
+    return jsonify({'status':'OK',
+                        'body':userdetails})
+
+@app.route("/venueopenclose",methods=['POST'])
+def venuestatus():
+    if request.method=="POST":
+        venueId=request.json['venueId']
+        venueOpen=request.json['venueOpen']
+        print(venueId, venueOpen)
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("Update  venue set venueOpen=%s where venueId=%s",(venueOpen,venueId))
+        mysql.connection.commit()
+        return ({'status':'OK'})
+    else:
+        return ({'status':'FAIL'})
+
 class activityPayment(db.Model):
     __tablename__="activityPayment"
     paymentId=db.Column(db.Integer,primary_key=True,nullable=False)
@@ -1028,7 +1145,6 @@ class Activities(db.Model):
     #activityState=db.Column(db.Text(25))
     activityVenueCost=db.Column(db.Integer,nullable=False)
     activityBookingDate=db.Column(db.Text(100))
-        
         
         
 class Accounts(db.Model):
@@ -1100,4 +1216,18 @@ class venueRating(db.Model):
     review=db.Column(db.Text)
     venue=relationship("venue")
     account=relationship("Accounts")
+
+
+
+class booking(db.Model):
+    __tablename__="booking"
+    venueId=db.Column(db.Integer,ForeignKey("activities.activityVenueId"))
+    venuedate=db.Column(db.String(255),ForeignKey ("venue.venueId"))
+    venueslots=db.Column(db.String(255))
+    __mapper_args__ = {
+        "primary_key": [venueId, venuedate]
+    }
+    
+
+
 
