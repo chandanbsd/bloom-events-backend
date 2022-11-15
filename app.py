@@ -38,11 +38,11 @@ app = Flask(__name__)
 CORS(app)
 # mail= Mail(app)
 app.secret_key = 'your secret key'
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'root'
+app.config['MYSQL_HOST'] = 'EnterDetailsHere'
+app.config['MYSQL_USER'] = 'EnterUserName'
+app.config['MYSQL_PASSWORD'] = '#Password'
 app.config['MYSQL_DB'] = 'bloomdb'
-db_uri=app.config['SQLALCHEMY_DATABASE_URI'] ='mysql://root:root@localhost:3306/bloomdb' 
+db_uri=app.config['SQLALCHEMY_DATABASE_URI'] ='mysql://EnterUserName:#Password@EnterDetailsHere:3306/bloomdb' 
 # “dialect+driver://username:password@host:port/database”
 app.config['SQLALCHEMY_TR\\ACK_MODIFICATIONS'] = False
 
@@ -559,7 +559,7 @@ def factivity():
         activityTime=got['activityTime'],
         activityVenueCost=got['activityVenueCost'],
         activityBookingDate=got['activityBookingDate'],
-        activityImage=got['activityImage']
+        # activityImage=got['activityImage']
         )
 
     imageobj=storeimages(activityId=got['activityId'],
@@ -1062,59 +1062,59 @@ def getbookmark():
     else:
         return ({'status':'FAIL'})
         
-app.route("/delete_activity_organizer",methods=['POST'])
-def delete_activity_by_organizer():
-    got=request.get_json()
+# app.route("/delete_activity_organizer",methods=['POST'])
+# def delete_activity_by_organizer():
+#     got=request.get_json()
     
-    #deletion from the regact table
-    d_regact=db.session.query(regact).filter(regact.activityId==got['activityId']).all()
-    #print(d_regact)
-    for item in d_regact:
-        db.session.delete(item)
-        db.session.commit()
-    #deleltion from the rating table
-    d_activityRating=db.session.query(activityRating).filter(activityRating.activityId==got['activityId']).all()
-    for item in d_activityRating:
-        db.session.delete(item)
-        db.session.commit()
-        d_activities=db.session.query(Activities).filter(Activities.activityId==got['activityId']).all()
-        print(d_activities)
-    for act_item in d_activities:
-        print(act_item.activityId)
-        act_date=act_item.activityDate
-        act_time=act_item.activityTime
-        print(act_date)
-        print(act_time)
-        d_bookings=db.session.query(booking).filter(booking.venueId==act_item.activityVenueId,booking.venuedate==act_date).all()
-        print(d_bookings)
-        for book_item in d_bookings:
-            print(book_item.venueslots)
-            splitted_slots=book_item.venueslots.split(',')
-            print(splitted_slots)
+#     #deletion from the regact table
+#     d_regact=db.session.query(regact).filter(regact.activityId==got['activityId']).all()
+#     #print(d_regact)
+#     for item in d_regact:
+#         db.session.delete(item)
+#         db.session.commit()
+#     #deleltion from the rating table
+#     d_activityRating=db.session.query(activityRating).filter(activityRating.activityId==got['activityId']).all()
+#     for item in d_activityRating:
+#         db.session.delete(item)
+#         db.session.commit()
+#         d_activities=db.session.query(Activities).filter(Activities.activityId==got['activityId']).all()
+#         print(d_activities)
+#     for act_item in d_activities:
+#         print(act_item.activityId)
+#         act_date=act_item.activityDate
+#         act_time=act_item.activityTime
+#         print(act_date)
+#         print(act_time)
+#         d_bookings=db.session.query(booking).filter(booking.venueId==act_item.activityVenueId,booking.venuedate==act_date).all()
+#         print(d_bookings)
+#         for book_item in d_bookings:
+#             print(book_item.venueslots)
+#             splitted_slots=book_item.venueslots.split(',')
+#             print(splitted_slots)
 
-            for value in act_time:
-                print(value)
-                splitted_slots[value]="open/-1"
-                print(splitted_slots)
+#             for value in act_time:
+#                 print(value)
+#                 splitted_slots[value]="open/-1"
+#                 print(splitted_slots)
                 
-            length=len(splitted_slots)
-            list_to_string=''.join([str(elem)+',' for elem in splitted_slots[0:length-1]])
+#             length=len(splitted_slots)
+#             list_to_string=''.join([str(elem)+',' for elem in splitted_slots[0:length-1]])
 
             
-            list_to_string = list_to_string + ''.join(str(splitted_slots[-1]))
-            print(list_to_string)
+#             list_to_string = list_to_string + ''.join(str(splitted_slots[-1]))
+#             print(list_to_string)
 
-            book_item.venueslots=list_to_string
+#             book_item.venueslots=list_to_string
 
-            db.session.commit()
+#             db.session.commit()
 
-            #delete the activity also
-            db.session.delete(act_item)
-            db.session.commit()
+#             #delete the activity also
+#             db.session.delete(act_item)
+#             db.session.commit()
 
 
-    return jsonify({'status':'OK',
-                        'body':'activitydeleted'})
+#     return jsonify({'status':'OK',
+#                         'body':'activitydeleted'})
 
 @app.route("/return_participant_Details",methods=['POST'])
 def participant_Details():
@@ -1167,10 +1167,18 @@ def delete_activity_by_organizer():
 
     #deletion from the activityRating table
     d_activityRating=db.session.query(activityRating).filter(activityRating.activityId==got['activityId']).all()
-    #print(d_regact)
+
     for item in d_activityRating:
         db.session.delete(item)
         db.session.commit()
+
+    #deletion from storeimages
+    d_storeimages=db.session.query(storeimages).filter(storeimages.activityId==got['activityId']).all()
+    
+    for item in d_storeimages:
+        db.session.delete(item)
+        db.session.commit()
+    
     
     #updation in the venue table and then delete from the activities table
     d_activities=db.session.query(Activities).filter(Activities.activityId==got['activityId']).all()
