@@ -494,7 +494,9 @@ def venuebooking():
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute('INSERT into activities Values(%s,%s,%s,%s,%s,%s,%s,%s,%s, %s, %s, % s,%s,%s, %s,%s)',(activityId,activityName,activityDescription,activityCapacity,activityLocation,activityCategory,activityRemainingCapacity,activityAgeRange,activityCost,activityCostAmount,activityOrganizer,activityVenueId,activityDate,activityTime,activityVenueCost,activityBookingDate))        
         mysql.connection.commit()
-
+        
+        imageobj=storeimages(activityId=activityId,
+                                    activityImage=request.json['activityImage'].encode('utf-8'))
         db.session.add(imageobj)
         db.session.commit()
         print(imageobj)
@@ -509,8 +511,7 @@ def venuebooking():
                 cursor.execute('update booking set venueslots=%s where venuedate=%s',(venueslot,i))
                 mysql.connection.commit()
 
-                imageobj=storeimages(activityId=activityId,
-                                    activityImage=request.json['activityImage'].encode('utf-8'))
+                
 
             else:
                 venueslot=json.dumps(venueSlots[i])
