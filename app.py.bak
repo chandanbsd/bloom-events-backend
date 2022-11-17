@@ -473,6 +473,8 @@ def booking():
 
             f.write(str(int(activityId)+1))
 
+        
+
         venueSlots=request.json['venueSlots']
         activityName=request.json['activityName']
         activityDescription=request.json['activityDescription']
@@ -494,11 +496,6 @@ def booking():
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute('INSERT into activities Values(%s,%s,%s,%s,%s,%s,%s,%s,%s, %s, %s, % s,%s,%s, %s,%s)',(activityId,activityName,activityDescription,activityCapacity,activityLocation,activityCategory,activityRemainingCapacity,activityAgeRange,activityCost,activityCostAmount,activityOrganizer,activityVenueId,activityDate,activityTime,activityVenueCost,activityBookingDate))        
         mysql.connection.commit()
-
-        db.session.add(imageobj)
-        db.session.commit()
-        print(imageobj)
-        print("activity_information_and_image_stored_succesfullly")
         
         for i in venueSlots:
             cursor.execute('select venuedate from booking where venuedate=%s',(i,))
@@ -509,9 +506,7 @@ def booking():
                 cursor.execute('update booking set venueslots=%s where venuedate=%s',(venueslot,i))
                 mysql.connection.commit()
 
-                imageobj=storeimages(activityId=activityId,
-                                    activityImage=request.json['activityImage'].encode('utf-8'))
-
+                
             else:
                 venueslot=json.dumps(venueSlots[i])
                 cursor.execute('Insert into booking Values(%s,%s,%s)', (venueId,i,venueslot))
@@ -520,6 +515,15 @@ def booking():
         cursor.execute('SELECT * FROM activities WHERE activityOrganizer = %s', (activityOrganizer, ))
         username = cursor.fetchone()
         cursor.execute('SELECT * FROM booking WHERE venueId= %s', (venueId,))
+
+        imageobj=storeimages(activityId=activityId,
+                                    activityImage=request.json['activityImage'].encode('utf-8'))
+
+        db.session.add(imageobj)
+        db.session.commit()
+        print(imageobj)
+        print("activity_information_and_image_stored_succesfullly")
+        
         venueid=cursor.fetchone()
         if username and venueid:
             cursor.execute('select * from accounts inner join activities  on accounts.userName=activities.activityOrganizer where activities.activityOrganizer=% s',(activityOrganizer,))
