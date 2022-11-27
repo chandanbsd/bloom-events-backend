@@ -1,3 +1,7 @@
+CREATE DATABASE `bloomdb`
+
+use `bloomdb`;
+
 CREATE TABLE `accounts` (
   `firstName` varchar(255) DEFAULT NULL,
   `lastName` varchar(255) DEFAULT NULL,
