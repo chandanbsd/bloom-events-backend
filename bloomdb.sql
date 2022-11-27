@@ -61,15 +61,6 @@ CREATE TABLE `booking` (
   PRIMARY KEY (`venueId`,`venuedate`)
 ) 
 
-CREATE TABLE `storeimages` (
-  `imageId` int NOT NULL AUTO_INCREMENT,
-  `activityId` int DEFAULT NULL,
-  `activityImage` longblob,
-  PRIMARY KEY (`imageId`),
-  KEY `activityId` (`activityId`),
-  CONSTRAINT `storeimages_ibfk_1` FOREIGN KEY (`activityId`) REFERENCES `activities` (`activityId`)
-)
-
 
 CREATE TABLE `activities` (
   `activityId` int NOT NULL,
@@ -97,6 +88,15 @@ CREATE TABLE `bookmark` (
   `favVenue` varchar(255) DEFAULT NULL,
   `favActivity` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`userName`)
+)
+
+CREATE TABLE `storeimages` (
+  `imageId` int NOT NULL AUTO_INCREMENT,
+  `activityId` int DEFAULT NULL,
+  `activityImage` longblob,
+  PRIMARY KEY (`imageId`),
+  KEY `activityId` (`activityId`),
+  CONSTRAINT `storeimages_ibfk_1` FOREIGN KEY (`activityId`) REFERENCES `activities` (`activityId`)
 )
 
 CREATE TABLE `activityPayment` (
