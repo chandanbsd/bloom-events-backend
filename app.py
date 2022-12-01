@@ -23,7 +23,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Index, LargeBinary,BigInteger, String, Float, Text, Boolean
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import URL
-
+import stripe
 
 
 import os
@@ -37,23 +37,23 @@ Base = declarative_base()
 app = Flask(__name__)
 CORS(app)
 mail= Mail(app)
-app.secret_key = 'your secret key'
-app.config['MYSQL_HOST'] = 'bloomevents.mysql.database.azure.com'
-app.config['MYSQL_USER'] = 'EnterUserName'
-app.config['MYSQL_PASSWORD'] = '#Password'
-app.config['MYSQL_DB'] = 'bloomdb'
-db_uri=app.config['SQLALCHEMY_DATABASE_URI'] ='mysql://EnterUserName:#Password@bloomevents.mysql.database.azure.com:3306/bloomdb' 
-# “dialect+driver://username:password@host:port/database”
-app.config['SQLALCHEMY_TR\\ACK_MODIFICATIONS'] = False
-
 # app.secret_key = 'your secret key'
-# app.config['MYSQL_HOST'] = 'localhost'
-# app.config['MYSQL_USER'] = 'root'
-# app.config['MYSQL_PASSWORD'] = 'root'
+# app.config['MYSQL_HOST'] = 'bloomevents.mysql.database.azure.com'
+# app.config['MYSQL_USER'] = 'EnterUserName'
+# app.config['MYSQL_PASSWORD'] = '#Password'
 # app.config['MYSQL_DB'] = 'bloomdb'
-# temp=app.config['SQLALCHEMY_DATABASE_URI'] ='mysql://root:root@localhost:3306/bloomdb' 
+# db_uri=app.config['SQLALCHEMY_DATABASE_URI'] ='mysql://EnterUserName:#Password@bloomevents.mysql.database.azure.com:3306/bloomdb' 
 # # “dialect+driver://username:password@host:port/database”
-# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# app.config['SQLALCHEMY_TR\\ACK_MODIFICATIONS'] = False
+
+app.secret_key = 'your secret key'
+app.config['MYSQL_HOST'] = 'localhost'
+app.config['MYSQL_USER'] = 'root'
+app.config['MYSQL_PASSWORD'] = 'root'
+app.config['MYSQL_DB'] = 'bloomdb'
+temp=app.config['SQLALCHEMY_DATABASE_URI'] ='mysql://root:root@localhost:3306/bloomdb' 
+# “dialect+driver://username:password@host:port/database”
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 app.config['MAIL_SERVER']='smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
@@ -1257,7 +1257,7 @@ def venuestatus():
         return ({'status':'FAIL'})
 
 @app.route("/venuereviews",methods=['POST'])
-def venuereview():
+def venuereviews():
     print(request.json)
     if request.method=="POST":
         venueId=request.json['venueId']
@@ -1495,12 +1495,82 @@ def return_image():
     return " "
     
     
-    
+@app.route('/venuereview', methods =['GET', 'POST'])
+def venuereview():
+    if request.method=="POST":
+        print(request.json)
+        venueId=request.json['venueId']
+        userName=request.json['userName']
+        rating=request.json['rating']
+        review=request.json['review']
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("insert into venueRating values(%s,%s,%s,%s)",(venueId,userName,rating,review))
+        mysql.connection.commit()
+        return ({'status':'OK'})
+    else:
+        return ({'status':'FAIL'}) 
+
+@app.route('/getvenuereview', methods =['GET', 'POST'])
+def getvenuereview():
+    if request.method=="GET":
+        venueId=request.json['venueId']
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("select * from venueRating where venueId=%s",(venueId,))
+        data=cursor.fetchall()
+        if data:
+            return jsonify({'status': 'OK',
+                    'body':list(data)})
+        else:
+            return jsonify({'status': 'OK',
+                    'body':[]})
+    else:
+        return ({'status':'FAIL'})
+
+@app.route('/getuser', methods =['GET', 'POST'])
+def getuser():
+    if request.method=="POST":
+        venueId=request.json['venueId']
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        
+        cursor.execute("select concat(venue.venueId,':',group_concat(activities.activityOrganizer)) as d from venue inner join activities on venue.venueId=activities.activityVenueId where venue.venueId=%s group by venue.venueId",(venueId,))
+        data=cursor.fetchall()
+
+        print(data)
+        arr=[]
+        d_val={}
+        for i in data:
+            venueid=i['d'].split(':')[0]
+            activity_list=i['d'].split(':')[1]
+            activity_list=activity_list.split(',')
+            d_val[int(venueid)]=activity_list
+        print(d_val)
+        return jsonify({'status': 'OK',
+                'body':d_val})
+    else:
+        return ({'status':'FAIL'})
 
 
 
-
-    
-
+stripe.api_key = 'sk_test_51LzNWXKIBfi23JtJexwSYIv4zoIRkDaQtuNf7ZM8MD18Kz5UG9lz0AB5CjuAgpGhqqhVXiJkqjKjGHk1SXHT6CPk00FJyqd39v'
 
 
+def calculate_order_amount(items):
+    return 1400
+
+
+@app.route('/create-payment-intent', methods=['POST'])
+def create_payment():
+    try:
+        data = json.loads(request.data)
+        intent = stripe.PaymentIntent.create(
+            amount=calculate_order_amount(data['items']),
+            currency='usd',
+            automatic_payment_methods={
+                'enabled': True,
+            },
+        )
+        return jsonify({
+            'clientSecret': intent['client_secret']
+        })
+    except Exception as e:
+        return jsonify(error=str(e)), 403
