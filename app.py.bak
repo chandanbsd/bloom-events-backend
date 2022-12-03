@@ -1059,14 +1059,14 @@ def getbookmark():
             favVenue=[]
             favActivity=[]
 
-            if len(account['favVenue']) > 0 and len(account['favVenue']) <= 2:
-                print(account['favVenue'])
+            if len(account['favVenue']) > 0 and len(account['favVenue']) <= 1:
                 favVenue.append(int(account['favVenue']))
             else:
                 for i in account['favVenue']:
                     favVenue.append(int(i))
             
-            if len(account['favActivity']) > 0 and len(account['favActivity']) <= 2:
+            if len(account['favActivity']) > 0 and len(account['favActivity']) <= 1:
+                print(account['favActivity'])
                 favActivity.append(int(account['favActivity']))
             else:
                 for i in account['favActivity']:
