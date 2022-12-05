@@ -752,9 +752,10 @@ def reg_for_act():
     print(queryregact)
 
     for tuple in queryregact:
+        print("failed", got['userName'], tuple)
         if (tuple.activityId==got['activityId'] and tuple.userName==got['userName']):
             print("participant has already registered")
-        return jsonify({'status':'FAIL'})
+            return jsonify({'status':'FAIL'})
     
     db.session.add(regactobj)
     db.session.commit()
@@ -1574,3 +1575,47 @@ def create_payment():
         })
     except Exception as e:
         return jsonify(error=str(e)), 403
+
+@app.route('/organisercheck', methods =['GET', 'POST'])
+def organisercheck():
+    if request.method=="POST":
+        userName=request.json['userName']
+        venueId=request.json['venueId']
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('select * from activities where activityOrganizer=% s and activityVenueId=%s ', ( userName,venueId ))
+        
+        data=cursor.fetchone()
+        if data:
+            return ({'status':'OK',
+            'body':"true"})
+        else:
+            cursor.execute('select * from venue where venueOwner=% s and venueId=%s ', ( userName,venueId ))
+            d_v=cursor.fetchone()
+            if d_v:
+                return ({'status':'OK',
+            'body':"true"})
+            else:
+                return ({'status':'OK',
+            'body':"false"})
+
+@app.route('/participantcheck', methods =['GET', 'POST'])
+def participantcheck():
+    if request.method=="POST":
+        userName=request.json['userName']
+        activityId=request.json['activityId']
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('select * from regact where userName=%s and activityId=%s ', ( userName,activityId ))       
+        data=cursor.fetchone()
+        print(userName, activityId)
+        if data:
+            return ({'status':'OK',
+            'body':"true"})
+        else:
+            cursor.execute('select * from activities where activityOrganizer=% s and activityId=%s ', ( userName,activityId ))
+            d_v=cursor.fetchone()
+            if d_v:
+                return ({'status':'OK',
+            'body':"true"})
+
+    return ({'status':'OK',
+    'body':"false"})
