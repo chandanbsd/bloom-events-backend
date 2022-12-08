@@ -943,7 +943,9 @@ def insert_review_venue():
     # print(gotreview)
     
     numratings_beforeinsertion=len(venueRating.query.all())
-    print(numratings_beforeinsertion)
+    
+
+    
     
     reviewobj=venueRating(
         venueId = gotreview['venueId'],
@@ -951,6 +953,8 @@ def insert_review_venue():
         rating=gotreview['rating'],
         review=gotreview['review']
         )
+
+    print(gotreview['venueId'],gotreview['userName'],gotreview['rating'],gotreview['review'])
     
     db.session.add(reviewobj)
     db.session.commit()
