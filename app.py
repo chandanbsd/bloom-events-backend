@@ -17,7 +17,7 @@ from sqlalchemy import select,delete,update
 from sqlalchemy import create_engine
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, ForeignKey, Integer, Table
-from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.orm import relationship
 import json
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Index, LargeBinary,BigInteger, String, Float, Text, Boolean
