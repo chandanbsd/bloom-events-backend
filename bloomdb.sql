@@ -135,3 +135,5 @@ CREATE TABLE `activityRating` (
   CONSTRAINT `activityrating_ibfk_1` FOREIGN KEY (`activityId`) REFERENCES `Activities` (`activityId`),
   CONSTRAINT `activityrating_ibfk_2` FOREIGN KEY (`userName`) REFERENCES `Accounts` (`userName`)
 )
+
+create table MFA(username varchar(255),str varchar(255))

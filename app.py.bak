@@ -31,6 +31,14 @@ from flask import Flask, flash, request, redirect, url_for
 from werkzeug.utils import secure_filename
 import base64
 
+import pyotp
+import qrcode
+from IPython.display import display
+from io import BytesIO
+import os
+from flask import send_file
+import random
+import string
 
 Base = declarative_base()
 
@@ -1623,3 +1631,42 @@ def participantcheck():
 
     return ({'status':'OK',
     'body':"false"})
+
+@app.route('/authentication', methods=['POST'])
+def authentication():
+    if request.method=='POST':
+        print(request.json['username'])
+        username=request.json['username']
+        a=''.join(random.choices(string.ascii_uppercase, k=16))
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("insert into MFA Values(%s,%s)",(username,a))
+        mysql.connection.commit()
+
+        t=pyotp.TOTP(a)
+        auth_str=t.provisioning_uri(name="Bloomevents",issuer_name='Bloomevents')
+        img=qrcode.make(auth_str)
+        img_io = BytesIO()
+        img.save(img_io, 'PNG')
+        img_io.seek(0)
+        return send_file(img_io, mimetype='image/png')
+    else:
+        return{'status':'FAIL'}
+
+@app.route('/MFA', methods=['POST'])
+def MFA():
+    
+    if request.method=='POST':
+        otp=request.json['otp']
+        username=request.json['username']
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("select str from MFA where username=%s",(username,))
+        data=cursor.fetchone()
+        str=data['str']
+        print(str)
+        t=pyotp.TOTP(str)
+        if t.verify(otp):
+            return ({'status':'OK',
+            'body':"true"})
+        else:
+            return ({'status':'OK',
+            'body':"false"})
